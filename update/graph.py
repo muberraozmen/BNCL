@@ -1,7 +1,7 @@
 #TODO
 import torch
 import numpy as np
-
+print("test")
 __all__ = ['by_word_embeddings', 'by_hierarchy_tree', 'by_random', 'by_memory']
 
 

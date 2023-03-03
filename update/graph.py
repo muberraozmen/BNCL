@@ -39,12 +39,8 @@ def by_word_embeddings(embeddings_file, label2id, percentile_neg=0.4, percentile
 
 
 def by_hierarchy_tree(hierarchy_file, label2id, **kwargs):
-    num_labels = len(label2id)
-    adj = torch.zeros((num_labels, num_labels))  # in {-1, 0, 1}, diagonal zero, undirected
-    vals = torch.randint(-1, 2, (1, int(num_labels*(num_labels+1)/2)))
-    i, j = torch.triu_indices(num_labels, num_labels)
-    adj[i, j] = vals.float()
-    adj.T[i, j] = vals.float()
+    adj = None
+    # TODO: Joseph
     return adj
 
 

@@ -14,7 +14,7 @@ if __name__ == '__main__':
     parser.add_argument("-hierarchy_file", type=str)
     parser.add_argument("-percentile_neg", type=float, default=0.3)
     parser.add_argument("-percentile_pos", type=float, default=0.7)
-    parser.add_argument("-batch_size", type=int, default=32)
+    parser.add_argument("-batch_size", type=int, default=128)
     parser.add_argument("-num_layers", type=int, default=2)
     parser.add_argument("-num_epochs", type=int, default=10)
     parser.add_argument("-seed", type=int, default=0)

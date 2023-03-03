@@ -45,12 +45,10 @@ class ModelRunner(object):
             predictions = self.model.predict(entailments, contradictions)
         return predictions
 
-    def set_optimizer(self, lr=1e-3, betas=(0.9, 0.999), weight_decay=0,
-                      step_size=10, gamma=0.1,
-                      eta_min=1e-5, T_0=50, T_mult=2, **kwargs):
+    def set_optimizer(self, lr=1e-3, betas=(0.8, 0.9), weight_decay=0,
+                      step_size=10, gamma=0.1, **kwargs):
         optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, betas=betas, weight_decay=weight_decay)
-        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=gamma)
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, eta_min=eta_min, T_0=T_0, T_mult=T_mult)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=gamma, verbose=True)
         return optimizer, scheduler
 
     def save_model(self, model_dir):

@@ -2,7 +2,7 @@
 import torch
 import numpy as np
 
-__all__ = ['by_word_embeddings', 'by_hierarchy_tree']
+__all__ = ['by_word_embeddings', 'by_hierarchy_tree', 'by_random', 'by_memory']
 
 
 def by_word_embeddings(embeddings_file, label2id, percentile_neg=0.4, percentile_pos=0.6, **kwargs):
@@ -51,4 +51,13 @@ def by_random(label2id, **kwargs):
     i, j = torch.triu_indices(num_labels, num_labels)
     adj[i, j] = vals.float()
     adj.T[i, j] = vals.float()
+    return adj
+
+
+def by_memory(similarity_file='/Users/mob/Documents/PycharmProjects/BNCL/update/inputs/reuters/similarity.pt',
+              percentile_neg=0.4, percentile_pos=0.6, **kwargs):
+    similarity = torch.load(similarity_file)
+    lower = torch.quantile(similarity, percentile_neg)
+    upper = torch.quantile(similarity, percentile_pos)
+    adj = 1 * (similarity >= upper) - 1 * (similarity <= lower)
     return adj

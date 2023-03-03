@@ -1,7 +1,9 @@
 #TODO
+import pickle
+
 import torch
 import numpy as np
-print("test")
+
 __all__ = ['by_word_embeddings', 'by_hierarchy_tree', 'by_random', 'by_memory']
 
 
@@ -39,8 +41,17 @@ def by_word_embeddings(embeddings_file, label2id, percentile_neg=0.4, percentile
 
 
 def by_hierarchy_tree(hierarchy_file, label2id, **kwargs):
-    adj = None
-    # TODO: Joseph
+    adj = torch.zeros((len(label2id.values()), len(label2id.values())), dtype = torch.int32, device = torch.device('cuda:0'))
+    with open(hierarchy_file, "rb") as f:
+        hierarchy = pickle.load(f)
+    for parent in hierarchy.keys():
+        for child in hierarchy[parent]:
+            for sibling in hierarchy[parent]:
+                adj[label2id[child], label2id[sibling]] = -1
+            if parent in label2id.values():
+                adj[label2id[child], label2id[parent]] = 1
+    for i in range(len(label2id.values())):
+        adj[i,i] = 0
     return adj
 
 
@@ -54,7 +65,7 @@ def by_random(label2id, **kwargs):
     return adj
 
 
-def by_memory(similarity_file='/Users/mob/Documents/PycharmProjects/BNCL/update/inputs/reuters/similarity.pt',
+def by_memory(similarity_file="C:/Users/jcotn/PycharmProjects/BNCL/update/inputs/reuters/similarity.pt",
               percentile_neg=0.4, percentile_pos=0.6, **kwargs):
     similarity = torch.load(similarity_file)
     lower = torch.quantile(similarity, percentile_neg)

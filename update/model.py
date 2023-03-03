@@ -32,13 +32,18 @@ class UpdateModel(nn.Module):
         adj_neg = 1 * (adj < 0)
         k = 0
         friends, enemies = adj_pos, adj_neg
+        friends = friends.type(torch.int32).to(torch.device('cpu'))
+        enemies = enemies.type(torch.int32).to(torch.device('cpu'))
+        adj_pos = adj_pos.type(torch.int32).to(torch.device('cpu'))
+        adj_neg = adj_neg.type(torch.int32).to(torch.device('cpu'))
+
         while k < hob:
             friends_new = (torch.matmul(adj_pos, friends) + torch.matmul(adj_neg, enemies))
             enemies_new = (torch.matmul(adj_pos, enemies) + torch.matmul(adj_neg, friends))
             friends = torch.where(friends_new >= 1, 1, friends_new).fill_diagonal_(0)
             enemies = torch.where(enemies_new >= 1, 1, enemies_new).fill_diagonal_(0)
             k += 1
-        return friends, enemies
+        return friends.to(torch.device('cuda:0')), enemies.to(torch.device('cuda:0'))
 
     def predict(self, entailments, contradictions):
         predictions = 1 * (entailments >= contradictions)

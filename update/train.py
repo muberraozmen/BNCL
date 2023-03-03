@@ -28,7 +28,7 @@ if __name__ == '__main__':
     else:
         device = args.device
 
-    results_dir = args.results_dir + '/supervision level ' + str(args.supervision) + '/seed ' + str(args.seed) + time.strftime('on %m.%d.%Y/at %H:%M:%S/')
+    results_dir = args.results_dir + '/supervision level ' + str(args.supervision) + '/seed ' + str(args.seed) + time.strftime('on %m.%d.%Y/at %H.%M.%S/')
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
     logger = get_logger(results_dir=results_dir)

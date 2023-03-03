@@ -64,7 +64,7 @@ class TransformedData(Dataset):
         self.kappa = self.Y_true.mean()
         self.lambdas = self.Y_true.mean(0)
         self.adj = by_memory(**kwargs)
-        # self.adj = by_hierarchy_tree(hierarchy_file, label2id=self.label2id, **kwargs)
+        self.adj = by_hierarchy_tree(hierarchy_file, label2id=self.label2id, **kwargs)
 
     def load_test(self):
         data = torch.softmax(torch.as_tensor(torch.load(self.data_dir + '/test/' + 'X.pt')), dim=2)

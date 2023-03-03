@@ -1,22 +1,22 @@
-from update.loader import *
-from update.model import *
-from update.loss import *
-from update.runner import *
-from update.utils import *
+from loader import *
+from model import *
+from loss import *
+from runner import *
+from utils import *
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-data_dir", type=str, default="./inputs/reuters/")
-    parser.add_argument("-results_dir", type=str, default="./outputs/reuters/")
+    parser.add_argument("-data_dir", type=str, default="./update/inputs/reuters/")
+    parser.add_argument("-results_dir", type=str, default="./update/outputs/reuters/")
     parser.add_argument("-supervision", type=int, default=1)
-    parser.add_argument("-embeddings_file", type=str, default="./inputs/glove.6B.100d.txt")
+    parser.add_argument("-embeddings_file", type=str, default="./update/inputs/glove.6B.100d.txt")
     parser.add_argument("-hierarchy_file", type=str)
     parser.add_argument("-percentile_neg", type=float, default=0.1)
     parser.add_argument("-percentile_pos", type=float, default=0.9)
     parser.add_argument("-batch_size", type=int, default=128)
     parser.add_argument("-num_layers", type=int, default=2)
-    parser.add_argument("-num_epochs", type=int, default=10)
+    parser.add_argument("-num_epochs", type=int, default=30)
     parser.add_argument("-seed", type=int, default=128)
     parser.add_argument("-device")
     args = parser.parse_args()
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     else:
         device = args.device
 
-    results_dir = args.results_dir + '/supervision level ' + str(args.supervision) + '/' + time.strftime('on %m.%d.%Y/at %H:%M:%S/')
+    results_dir = args.results_dir + '/supervision level ' + str(args.supervision) + '/seed ' + str(args.seed) + time.strftime('on %m.%d.%Y/at %H:%M:%S/')
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
     logger = get_logger(results_dir=results_dir)

@@ -7,11 +7,11 @@ __all__ = ['UpdateModel']
 
 
 class UpdateModel(nn.Module):
-    def __init__(self, num_labels, num_layers, adj):
+    def __init__(self, num_labels, num_layers, adj, device):
         super(UpdateModel, self).__init__()
         self.layers = nn.ModuleList()
         for k in range(num_layers):
-            d_pos, d_neg = self.balanced_neighborhoods(adj, hob=k)
+            d_pos, d_neg = self.balanced_neighborhoods(adj, k, device)
             self.layers.append(Layer(num_labels, d_pos, d_neg))
         self.reset_parameters()
 
@@ -26,7 +26,7 @@ class UpdateModel(nn.Module):
                 nn.init.xavier_normal_(p)
 
     @staticmethod
-    def balanced_neighborhoods(adj, hob):
+    def balanced_neighborhoods(adj, hob, device):
         adj = adj.fill_diagonal_(0)
         adj_pos = 1 * (adj > 0)
         adj_neg = 1 * (adj < 0)
@@ -43,7 +43,7 @@ class UpdateModel(nn.Module):
             friends = torch.where(friends_new >= 1, 1, friends_new).fill_diagonal_(0)
             enemies = torch.where(enemies_new >= 1, 1, enemies_new).fill_diagonal_(0)
             k += 1
-        return friends.to(torch.device('cuda:0')), enemies.to(torch.device('cuda:0'))
+        return friends.to(device), enemies.to(device)
 
     def predict(self, entailments, contradictions):
         predictions = 1 * (entailments >= contradictions)

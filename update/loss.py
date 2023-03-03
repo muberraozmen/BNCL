@@ -24,16 +24,16 @@ class CollectiveLoss(object):
         self.L4 = nn.MSELoss(reduction='sum')
         self.L5 = nn.BCELoss(reduction='sum')
 
-    def calculate(self, entailment, contradiction, y_true=None):
+    def calculate(self, entailment, contradiction, y_true=None, device=torch.device('cpu')):
         l1 = self.L1(entailment + contradiction, torch.ones_like(entailment))
         l2 = - 1 * self.L2(entailment - contradiction, torch.zeros_like(entailment))
         y_pred = 1 / (1 + torch.exp(-self.beta*(entailment - contradiction)))
-        l3 = self.L3(y_pred.sum(dim=0), entailment.size(0) * self.lambdas)
-        l4 = self.L4(y_pred.sum(dim=1), self.kappa * torch.ones(entailment.size(0)))
+        l3 = self.L3(y_pred.sum(dim=0).to(device), entailment.size(0) * self.lambdas.to(device))
+        l4 = self.L4(y_pred.sum(dim=1).to(device), self.kappa.to(device) * torch.ones(entailment.size(0)).to(device))
         if y_true is None:
             return self.alphas[0] * l1 + self.alphas[2] * l3 + self.alphas[3] * l4
         else:
-            l5 = self.L5(y_pred, y_true)
+            l5 = self.L5(y_pred.to(device), y_true.to(device))
             return self.alphas[0] * l1 + self.alphas[2] * l3 + self.alphas[3] * l4 + self.alphas[4] * l5
         if y_true is None:
             return self.alphas[0] * l1 + self.alphas[1] * l2 + self.alphas[2] * l3 + self.alphas[3] * l4

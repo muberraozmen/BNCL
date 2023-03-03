@@ -19,7 +19,7 @@ class ModelRunner(object):
             self.model.train()
             self.optimizer.zero_grad()
             entailment_updated, contradiction_updated = self.model(entailment.to(self.device), contradiction.to(self.device))
-            batch_loss = self.loss.calculate(entailment_updated, contradiction_updated)
+            batch_loss = self.loss.calculate(entailment_updated.to(self.device), contradiction_updated.to(self.device), device = self.device)
             batch_loss.backward()
             self.optimizer.step()
             epoch_loss += batch_loss.item()

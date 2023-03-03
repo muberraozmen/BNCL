@@ -51,7 +51,7 @@ if __name__ == '__main__':
     for i, (key, value) in enumerate(base_metrics.items()):
         logger.info('{:} = {:}'.format(key, np.round_(value, decimals=4)))
 
-    model = UpdateModel(num_labels=data.num_labels, adj=data.adj,  num_layers=args.num_layers)
+    model = UpdateModel(num_labels=data.num_labels, adj=data.adj,  num_layers=args.num_layers, device = device)
     loss = CollectiveLoss(kappa=data.kappa, lambdas=data.lambdas)
     runner = ModelRunner(model, loss, device=device)
 

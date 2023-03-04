@@ -53,6 +53,8 @@ class TransformedData(Dataset):
         # self.adj = by_word_embeddings(embeddings_file, label2id=self.label2id, **kwargs)
 
     def scarce_annotation(self, embeddings_file, annotation_ratio=10, **kwargs):
+        print(annotation_ratio)
+
         self.annotated_idx = torch.randint(0, self.num_samples, (self.num_samples//annotation_ratio, )).long()
         self.kappa = self.Y_true[self.annotated_idx, :].mean()
         self.lambdas = self.Y_true[self.annotated_idx, :].mean(0)
@@ -64,7 +66,7 @@ class TransformedData(Dataset):
         self.kappa = self.Y_true.mean()
         self.lambdas = self.Y_true.mean(0)
         self.adj = by_memory(**kwargs)
-        self.adj = by_hierarchy_tree(hierarchy_file, label2id=self.label2id, **kwargs)
+        # self.adj = by_hierarchy_tree(hierarchy_file, label2id=self.label2id, **kwargs)
 
     def load_test(self):
         data = torch.softmax(torch.as_tensor(torch.load(self.data_dir + '/test/' + 'X.pt')), dim=2)

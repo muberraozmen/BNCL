@@ -10,6 +10,7 @@ if __name__ == '__main__':
     parser.add_argument("-data_dir", type=str, default="./update/inputs/reuters/")
     parser.add_argument("-results_dir", type=str, default="./update/outputs/reuters/")
     parser.add_argument("-supervision", type=int, default=1)
+    parser.add_argument("-annotation_ratio", type=int, default=10)
     parser.add_argument("-embeddings_file", type=str, default="./update/inputs/glove.6B.100d.txt")
     parser.add_argument("-hierarchy_file", type=str)
     parser.add_argument("-percentile_neg", type=float, default=0.1)
@@ -28,7 +29,7 @@ if __name__ == '__main__':
     else:
         device = args.device
 
-    results_dir = args.results_dir + '/supervision level ' + str(args.supervision) + '/seed ' + str(args.seed) + time.strftime('on %m.%d.%Y/at %H.%M.%S/')
+    results_dir = args.results_dir + '/supervision level ' + str(args.supervision) + '/seed ' + str(args.seed) + time.strftime(' on %m.%d.%Y at %H.%M.%S/')
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
     logger = get_logger(results_dir=results_dir)
@@ -51,7 +52,7 @@ if __name__ == '__main__':
     for i, (key, value) in enumerate(base_metrics.items()):
         logger.info('{:} = {:}'.format(key, np.round_(value, decimals=4)))
 
-    model = UpdateModel(num_labels=data.num_labels, adj=data.adj,  num_layers=args.num_layers, device = device)
+    model = UpdateModel(num_labels=data.num_labels, adj=data.adj,  num_layers=args.num_layers)
     loss = CollectiveLoss(kappa=data.kappa, lambdas=data.lambdas)
     runner = ModelRunner(model, loss, device=device)
 

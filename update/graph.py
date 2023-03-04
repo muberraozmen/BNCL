@@ -65,7 +65,7 @@ def by_random(label2id, **kwargs):
     return adj
 
 
-def by_memory(similarity_file="C:/Users/jcotn/PycharmProjects/BNCL/update/inputs/reuters/similarity.pt",
+def by_memory(similarity_file="./update/inputs/reuters/similarity.pt",
               percentile_neg=0.4, percentile_pos=0.6, **kwargs):
     similarity = torch.load(similarity_file)
     lower = torch.quantile(similarity, percentile_neg)

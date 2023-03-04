@@ -7,11 +7,11 @@ __all__ = ['UpdateModel']
 
 
 class UpdateModel(nn.Module):
-    def __init__(self, num_labels, num_layers, adj, device):
+    def __init__(self, num_labels, num_layers, adj):
         super(UpdateModel, self).__init__()
         self.layers = nn.ModuleList()
         for k in range(num_layers):
-            d_pos, d_neg = self.balanced_neighborhoods(adj, k, device)
+            d_pos, d_neg = self.balanced_neighborhoods(adj, k)
             self.layers.append(Layer(num_labels, d_pos, d_neg))
         self.reset_parameters()
 
@@ -26,24 +26,23 @@ class UpdateModel(nn.Module):
                 nn.init.xavier_normal_(p)
 
     @staticmethod
-    def balanced_neighborhoods(adj, hob, device):
+    def balanced_neighborhoods(adj, hob):
         adj = adj.fill_diagonal_(0)
-        adj_pos = 1 * (adj > 0)
-        adj_neg = 1 * (adj < 0)
+        adj_pos = (1 * (adj > 0)).float()
+        adj_neg = (1 * (adj < 0)).float()
         k = 0
         friends, enemies = adj_pos, adj_neg
-        friends = friends.type(torch.int32).to(torch.device('cpu'))
-        enemies = enemies.type(torch.int32).to(torch.device('cpu'))
-        adj_pos = adj_pos.type(torch.int32).to(torch.device('cpu'))
-        adj_neg = adj_neg.type(torch.int32).to(torch.device('cpu'))
-
+        # friends = friends.type(torch.int32).to(torch.device('cpu'))
+        # enemies = enemies.type(torch.int32).to(torch.device('cpu'))
+        # adj_pos = adj_pos.type(torch.int32).to(torch.device('cpu'))
+        # adj_neg = adj_neg.type(torch.int32).to(torch.device('cpu'))
         while k < hob:
             friends_new = (torch.matmul(adj_pos, friends) + torch.matmul(adj_neg, enemies))
             enemies_new = (torch.matmul(adj_pos, enemies) + torch.matmul(adj_neg, friends))
-            friends = torch.where(friends_new >= 1, 1, friends_new).fill_diagonal_(0)
-            enemies = torch.where(enemies_new >= 1, 1, enemies_new).fill_diagonal_(0)
+            friends = (1 * (friends_new >= 1)).fill_diagonal_(0).float()
+            enemies = (1 * (enemies_new >= 1)).fill_diagonal_(0).float()
             k += 1
-        return friends.to(device), enemies.to(device)
+        return friends, enemies
 
     def predict(self, entailments, contradictions):
         predictions = 1 * (entailments >= contradictions)

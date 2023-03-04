@@ -48,7 +48,7 @@ class ModelRunner(object):
     def set_optimizer(self, lr=1e-3, betas=(0.8, 0.9), weight_decay=0,
                       step_size=10, gamma=0.1, **kwargs):
         optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, betas=betas, weight_decay=weight_decay)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=gamma, verbose=True)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=gamma, verbose=False)
         return optimizer, scheduler
 
     def save_model(self, model_dir):

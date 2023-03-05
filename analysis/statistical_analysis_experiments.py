@@ -1,0 +1,34 @@
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import scipy.stats
+
+
+df = pd.read_csv('/Users/mob/Documents/PycharmProjects/BNCL/analysis/different_annotation_levels.csv')
+sns.set_theme(palette="Set2", style="white", font_scale=2)
+
+
+def plot_metric(metric_name):
+    plt.plot()
+    sns.violinplot(data=df, x="Ratio", y=metric_name, split=True)
+    plt.xlabel("Annotation Ratio")
+    plt.ylabel("")
+    plt.title(metric_name)
+    plt.tight_layout()
+    plt.savefig(metric_name + '.pdf')
+    plt.show()
+
+
+for metric in ["HA", "ACC", "ebF1", "miF1", "maF1"]:
+    plot_metric(metric)
+
+
+print(df.groupby("Ratio").mean().transpose())
+print(df.groupby("Ratio").std().transpose())
+
+confidence = 0.95
+n = 50
+coeff = scipy.stats.t.ppf((1 + confidence) / 2., n-1)
+
+
+

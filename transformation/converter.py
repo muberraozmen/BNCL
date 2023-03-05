@@ -88,7 +88,7 @@ class DataConverter(object):
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 data_root = "/home/muberra/scratch/BNCL/transformation/inputs/philosophy.stackexchange.com/"
-results_root = "/home/muberra/scratch/BNCL/transformation/outputs/stackex_philosophy/"
+results_root = "/home/muberra/scratch/BNCL/transformation/outputs/stackex_philosophy/per10/"
 # data_root = "/Users/mob/Documents/PycharmProjects/BNCL/transformation/inputs/philosophy.stackexchange.com/"
 # results_root = "/Users/mob/Documents/PycharmProjects/BNCL/transformation/outputs/stackex_philosophy/"
 if not os.path.exists(results_root):

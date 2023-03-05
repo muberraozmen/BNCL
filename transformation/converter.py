@@ -16,34 +16,22 @@ class DataConverter(object):
         self.model = model.to(self.device)
         X = []
         Y = []
-        i = 0
-        j = 0
-        print(label2id)
+        counter = 0
         self.id2hypothesis = self.get_hypotheses()
         for src, tgt in samples.items():
             premise = self.tokenize_premise(src)
             try:
-                if j%200 == 0:
-                    print("j is:", j)
-                tic = time.perf_counter()
                 X.append(self.calculate_odds(premise))
                 Y.append(self.onehot(tgt))
-                toc = time.perf_counter()
-                j = j + 1
-                #print(f"One sample processing time {toc - tic:0.4f} seconds")
+                counter = counter + 1
             except:
-                i += 1
-                if i == 1:
-                    print('PROBLEM \n')
-                    print(src, '\n')
-                    print(tgt, '\n')
-                    print(self.onehot(tgt), '\n')
-                    print("i: ", i, '\n')
-                    print("j: ", j, '\n')
                 pass
+            if counter % 3:
+                self.X = torch.stack(X, dim=0)
+                self.Y = torch.stack(Y, dim=0)
+                self.save_data(data_dir + '/first' + str(counter) + '/')
         self.X = torch.stack(X, dim=0)
         self.Y = torch.stack(Y, dim=0)
-        self.Y_pred = self.get_independent_estimations()
         self.save_data(data_dir)
 
     def tokenize_premise(self, premise):
@@ -95,50 +83,37 @@ class DataConverter(object):
             os.makedirs(data_dir)
         torch.save(self.X.cpu().numpy(), data_dir + '/X.pt')
         torch.save(self.Y.cpu().numpy(), data_dir + '/Y_true.pt')
-        torch.save(self.Y_pred.cpu().numpy(), data_dir + '/Y_pred0.pt')
 
-#
-# data_root = "C:/Users/jcotn/OneDrive/Desktop/XMTC/resources/RCV1"
-# reduce_data = False
-# device = "cuda" if torch.cuda.is_available() else "cpu"
-#
-# data = readers.RCV1(data_root, sample=False)
-# test = data['test']
-# label2id = data['label2id']
-# torch.save(label2id, data_root + '/label2id.pt')
-# if "prior" in data.keys():
-#     torch.save(data['prior'], data_root + '/prior.pt')
-# print("doing train")
-# DataConverter(data['train'], label2id, device=device, data_dir=data_root + "/train/")
-# print("doing test")
-# DataConverter(data['test'], label2id, device=device, data_dir=data_root + "/test/")
-import random
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
-data_root = "/home/muberra/projects/def-coama74/muberra/XMTC/resources/reuters21578/"
-Reuters = readers.Reuters(data_root)
-samples = Reuters["samples"]
-# rcv1 = readers.RCV1("C:/Users/jcotn/OneDrive/Desktop/XMTC/resources/RCV1", sample=True)
-# label2idRCV1 = rcv1['label2id']
-# test = rcv1['test']
-# reduced = random.sample(list(samples["train"].items()), 2000)
-# train_idx = random.sample(range(2000), 1000)
-# test_idx = set(range(2000)) - set(train_idx)
-# reduced_train = {reduced[idx][0]: reduced[idx][1] for idx in train_idx}
-# reduced_test = {reduced[idx][0]: reduced[idx][1] for idx in test_idx}
-# print("doing train")
-# DataConverter(reduced_train, label2id, device=device, data_dir=data_root + "/train/")
-# print("doing test")
-# DataConverter(reduced_test, label2id, device=device, data_dir=data_root + "/test/")
-labels = Reuters["topics_vocab"].values()
-i = 0
-label2id = {}
-for label in labels:
-    label2id[label.upper()] = i
-    i = i + 1
 
-torch.save(label2id, data_root + '/label2id.pt')
-print("doing train")
-DataConverter(samples["train"], label2id, device=device, data_dir=data_root + "full/train/")
-print("doing test")
-DataConverter(samples["test"], label2id, device=device, data_dir=data_root + "full/test/")
+data_root = "/home/muberra/scratch/BNCL/transformation/inputs/philosophy.stackexchange.com/"
+results_root = "/home/muberra/scratch/BNCL/transformation/outputs/stackex_philosophy/"
+# data_root = "/Users/mob/Documents/PycharmProjects/BNCL/transformation/inputs/philosophy.stackexchange.com/"
+# results_root = "/Users/mob/Documents/PycharmProjects/BNCL/transformation/outputs/stackex_philosophy/"
+if not os.path.exists(results_root):
+    os.makedirs(results_root)
+data = readers.stackex_philosophy(data_root)
+label2id = {}
+i = 0
+for label in data[1]:
+    label2id[label] = i
+    i = i + 1
+torch.save(label2id, results_root + '/label2id.pt')
+DataConverter(data[0], label2id, device=device, data_dir=results_root)
 print()
+
+# data_root = '/Users/mob/Documents/PycharmProjects/BNCL/transformation/inputs/reuters21578'
+# results_root = "/Users/mob/Documents/PycharmProjects/BNCL/transformation/outputs/reuters21578/"
+# if not os.path.exists(results_root):
+#     os.makedirs(results_root)
+# data = readers.Reuters(data_root)
+# label2id = {}
+# i = 0
+# for label in data["topics_vocab"].values():
+#     label2id[label.upper()] = i
+#     i = i + 1
+# torch.save(label2id, results_root + '/label2id.pt')
+# DataConverter(data["samples"]["train"], label2id, device=device, data_dir=results_root + "full/train/")
+# DataConverter(data["samples"]["test"], label2id, device=device, data_dir=results_root + "full/test/")
+# print()

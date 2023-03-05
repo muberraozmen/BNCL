@@ -25,7 +25,7 @@ class DataConverter(object):
                 Y.append(self.onehot(tgt))
                 counter = counter + 1
                 print(counter)
-                if counter % 10 == 0:
+                if counter % 100 == 0:
                     self.X = torch.stack(X, dim=0)
                     self.Y = torch.stack(Y, dim=0)
                     self.save_data(data_dir + '/first' + str(counter) + '/')

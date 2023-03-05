@@ -1,8 +1,53 @@
 import numpy as np
 import random
 import pickle
-import datasets
+import traceback
+import xml.etree.ElementTree as etree
+from collections import defaultdict
+from bs4 import BeautifulSoup
+from tqdm import tqdm
+import re
 
+import datasets
+CLEANR = re.compile('<.*?>')
+
+def cleanhtml(raw_html):
+  cleantext = re.sub(CLEANR, '', raw_html)
+  return cleantext
+def pullTags(raw_html):
+    tags = re.findall(CLEANR, raw_html)
+    tags = [tag.replace("<", "").replace(">", "").replace("-", " ") for tag in tags]
+    return tags
+def stackex_philosophy(data_root):
+    data = {}
+    qa_pairs = {}
+    questions = {}
+    answers = {}
+    labels = []
+    for event, elem in tqdm(etree.iterparse(data_root + "/Posts.xml", events=('end',)), desc="Parsing {} XML file".format("stackexchange_philosophy")):
+        if elem.tag == "row":
+            attribs = defaultdict(lambda: None, elem.attrib)
+            if attribs["PostTypeId"] == '1':
+                tags = pullTags(attribs["Tags"])
+                for tag in tags:
+                    if tag not in labels:
+                        labels.append(tag)
+                questions[int(attribs["Id"])] = {"Body": cleanhtml(attribs["Body"].replace("\n", " ")), "Tags": tags}
+                if "AcceptedAnswerId" in attribs.keys():
+                    qa_pairs[int(attribs["Id"])] = int(attribs["AcceptedAnswerId"])
+                    if int(attribs["AcceptedAnswerId"]) in answers.keys():
+                        questions[int(attribs["id"])]["Body"] += " " + answers[int(attribs["AcceptedAnswerId"])]["Body"]
+            if attribs["PostTypeId"] == '2':
+                answers[int(attribs["Id"])] = {"Body": cleanhtml(attribs["Body"].replace("\n", " "))}
+                if int(attribs["ParentId"]) in qa_pairs.keys():
+                    questions[int(attribs["ParentId"])]["Body"] += " " + answers[int(attribs["Id"])]["Body"]
+    for key, value in questions.items():
+        data[value["Body"]] = value["Tags"]
+    return data, labels
+
+    # with open(data_root + '/Posts.xml') as f:
+    #     for line in f:
+    #         if line.startswith("<row Id"):
 
 def RCV1(data_root, sample=False, start_index = 0):
     label_vocab = {}

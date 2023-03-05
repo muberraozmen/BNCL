@@ -39,7 +39,7 @@ def stackex_philosophy(data_root):
                         questions[int(attribs["id"])]["Body"] += " " + answers[int(attribs["AcceptedAnswerId"])]["Body"]
             if attribs["PostTypeId"] == '2':
                 answers[int(attribs["Id"])] = {"Body": cleanhtml(attribs["Body"].replace("\n", " "))}
-                if int(attribs["ParentId"]) in qa_pairs.keys():
+                if int(attribs["ParentId"]) in qa_pairs.keys() and int(attribs["Id"]) == qa_pairs[int(attribs["ParentId"])]:
                     questions[int(attribs["ParentId"])]["Body"] += " " + answers[int(attribs["Id"])]["Body"]
     for key, value in questions.items():
         data[value["Body"]] = value["Tags"]

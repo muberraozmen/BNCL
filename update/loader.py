@@ -93,3 +93,8 @@ class AnnotatedData(Dataset):
         target = self.Y_true[i, :]
         return entailment, contradiction, target
 
+
+# data_dir = '/Users/mob/Documents/PycharmProjects/BNCL/transformation/outputs/stackex_philosophy/first20/'
+# X = torch.softmax(torch.as_tensor(torch.load(data_dir + '/X.pt')), dim=2)
+# Y_true = torch.as_tensor(torch.load(data_dir + '/Y_true.pt'))
+# print()

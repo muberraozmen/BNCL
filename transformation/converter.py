@@ -26,7 +26,7 @@ class DataConverter(object):
                 counter = counter + 1
             except:
                 pass
-            if counter % 1000 == 0:
+            if counter % 10 == 0:
                 self.X = torch.stack(X, dim=0)
                 self.Y = torch.stack(Y, dim=0)
                 self.save_data(data_dir + '/first' + str(counter) + '/')

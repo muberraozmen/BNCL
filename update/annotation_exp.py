@@ -22,7 +22,7 @@ if __name__ == '__main__':
     parser.add_argument("-device")
     args = parser.parse_args()
     results = {}
-    for annotation_ratio in range(5, 85, 5):
+    for annotation_ratio in [1, 10, 20, 30, 40, 50]:
         results[annotation_ratio] = {}
         for seed in range(1, 11,1):
             print("annotation ratio:", annotation_ratio, "seed:", seed)

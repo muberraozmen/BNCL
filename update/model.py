@@ -32,10 +32,7 @@ class UpdateModel(nn.Module):
         adj_neg = (1 * (adj < 0)).float()
         k = 0
         friends, enemies = adj_pos, adj_neg
-        # friends = friends.type(torch.int32).to(torch.device('cpu'))
-        # enemies = enemies.type(torch.int32).to(torch.device('cpu'))
-        # adj_pos = adj_pos.type(torch.int32).to(torch.device('cpu'))
-        # adj_neg = adj_neg.type(torch.int32).to(torch.device('cpu'))
+
         while k < hob:
             friends_new = (torch.matmul(adj_pos, friends) + torch.matmul(adj_neg, enemies))
             enemies_new = (torch.matmul(adj_pos, enemies) + torch.matmul(adj_neg, friends))

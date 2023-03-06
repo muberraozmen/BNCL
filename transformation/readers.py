@@ -11,13 +11,18 @@ import re
 import datasets
 CLEANR = re.compile('<.*?>')
 
+
 def cleanhtml(raw_html):
   cleantext = re.sub(CLEANR, '', raw_html)
   return cleantext
+
+
 def pullTags(raw_html):
     tags = re.findall(CLEANR, raw_html)
     tags = [tag.replace("<", "").replace(">", "").replace("-", " ") for tag in tags]
     return tags
+
+
 def stackex_philosophy(data_root):
     data = {}
     qa_pairs = {}
@@ -48,6 +53,7 @@ def stackex_philosophy(data_root):
     # with open(data_root + '/Posts.xml') as f:
     #     for line in f:
     #         if line.startswith("<row Id"):
+
 
 def RCV1(data_root, sample=False, start_index = 0):
     label_vocab = {}
@@ -130,7 +136,6 @@ def RCV1(data_root, sample=False, start_index = 0):
     return {"train": train, "test": test, "label2id": label2id, "prior": prior}
 
 
-
 def delicious():
     #available at https://archive.ics.uci.edu/ml/datasets/DeliciousMIL%3A+A+Data+Set+for+Multi-Label+Multi-Instance+Learning+with+Instance+Labels
     data_root = '/home/muberra/Desktop/PycharmProjects/XMTC/resources/DeliciousMIL/Data'
@@ -191,6 +196,8 @@ size: desired output dataset size
 e_label: expected number of labels
 k: fraction of selected documents that will have more than e_label labels
 '''
+
+
 def set_reducer(dataset, label2id, size, e_label, k, seed = 0):
     r = random.Random()
     excluded = []
@@ -272,6 +279,8 @@ def set_reducer(dataset, label2id, size, e_label, k, seed = 0):
             #print(len(reduced))
     #print(r.random())
     return reduced
+
+
 def ReutersHierarchyBuilder(topics):
     hierarchy = {}
     leaves = []
@@ -366,6 +375,7 @@ def ReutersHierarchyBuilder(topics):
     with open("C:/Users/jcotn/PycharmProjects/BNCL/update/inputs/reuters/hierarchy_file", "wb") as f:
         pickle.dump(hierarchy, f)
     return hierarchy, leaves
+
 
 def Reuters(data_root):
     topics_vocab = {}

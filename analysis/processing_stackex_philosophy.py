@@ -43,6 +43,11 @@ def delete_labels_without_embeddings(embeddings_file, label2id, X, Y):
         X = np.delete(X, label_id, 1)
         Y = np.delete(Y, label_id, 1)
         del label2id[id2label[label_id]]
+    for i in range(len(X)-1, -1, -1):
+        if np.sum(Y[i]) == 0:
+            Y = np.delete(Y, i, 0)
+            X = np.delete(X, i, 0)
+
     return X, Y, label2id
 def split(X, Y, path, seed, ratio):
     random.seed(seed)
@@ -108,12 +113,10 @@ def save_similarity(embeddings_file, label2id, path):
     torch.save(similarity, path + 'similarity.pt' )
 if __name__ == '__main__':
 
-    label2id = torch.load('C:/Users/jcotn/OneDrive/Desktop/XMTC/resources/stackexchange_philosophy/first5000/label2id.pt')
+    label2id = torch.load('C:/Users/jcotn/OneDrive/Desktop/XMTC/resources/stackexchange_philosophy/first5000/full/label2id.pt')
     X = torch.load("C:/Users/jcotn/OneDrive/Desktop/XMTC/resources/stackexchange_philosophy/first5000/full/X.pt")
     Y = torch.load("C:/Users/jcotn/OneDrive/Desktop/XMTC/resources/stackexchange_philosophy/first5000/full/Y_true.pt")
     X, Y, label2id = delete_labels_without_embeddings('../update/inputs/glove.6B.100d.txt', label2id, X, Y)
-    torch.save(X,"C:/Users/jcotn/OneDrive/Desktop/XMTC/resources/stackexchange_philosophy/first5000/full/X.pt")
-    torch.save(Y,"C:/Users/jcotn/OneDrive/Desktop/XMTC/resources/stackexchange_philosophy/first5000/full/Y_true.pt")
     torch.save(label2id, 'C:/Users/jcotn/OneDrive/Desktop/XMTC/resources/stackexchange_philosophy/first5000/label2id.pt')
     path = "C:/Users/jcotn/OneDrive/Desktop/XMTC/resources/stackexchange_philosophy/first5000/"
     split(X,Y,path, 1, 0.8)

@@ -68,8 +68,8 @@ y_test = torch.load("C:/Users/jcotn/OneDrive/Desktop/XMTC/resources/stackexchang
 test_entailments = x_test[:,:,2]
 test_contradictions = x_test[:,:,0]
 x_test = test_entailments/(test_entailments+test_contradictions)
-y_train = y_train.astype(np.bool)
-for k in [3,4,5,6,7,8,9,10,11,12]:
+y_train = y_train.astype(bool)
+for k in [1,2,3,4,5,6,7,8,9,10,11,12]:
     classifier = MLkNN(k=k)
     classifier.fit(x_train, y_train)
 

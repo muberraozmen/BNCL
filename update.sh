@@ -1,8 +1,8 @@
 #!/bin/bash
-for i in 5 10 90
+for i in 1 2 3
 do
-  for j in 0
+  for j in 0 2 4 8 16 32 64 128 256 512
   do
-    python3.8 -u update/train.py -annotation_ratio $i -supervision 2 -seed $j
+    python3.8 -u update/train.py -supervision $i -seed $j
   done
 done

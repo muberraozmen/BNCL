@@ -1,6 +1,4 @@
-#TODO
 import pickle
-
 import torch
 import numpy as np
 
@@ -65,8 +63,7 @@ def by_random(label2id, **kwargs):
     return adj
 
 
-def by_memory(similarity_file="./update/inputs/reuters/similarity.pt",
-              percentile_neg=0.4, percentile_pos=0.6, **kwargs):
+def by_memory(similarity_file, percentile_neg=0.4, percentile_pos=0.6, **kwargs):
     similarity = torch.load(similarity_file)
     lower = torch.quantile(similarity, percentile_neg)
     upper = torch.quantile(similarity, percentile_pos)

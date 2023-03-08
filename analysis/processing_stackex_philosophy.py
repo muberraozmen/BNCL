@@ -47,7 +47,6 @@ def delete_labels_without_embeddings(embeddings_file, label2id, X, Y):
         if np.sum(Y[i]) == 0:
             Y = np.delete(Y, i, 0)
             X = np.delete(X, i, 0)
-
     return X, Y, label2id
 def split(X, Y, path, seed, ratio):
     random.seed(seed)

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import scipy.stats
 
 
-df = pd.read_csv('/Users/mob/Documents/PycharmProjects/BNCL/analysis/different_annotation_levels.csv')
+df = pd.read_csv('stackex_annotation_ratios.csv')
 sns.set_theme(palette="Set2", style="white", font_scale=2)
 
 

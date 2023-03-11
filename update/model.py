@@ -69,6 +69,7 @@ class MaskedLinear(nn.Linear):
             self.register_buffer('mask', torch.ones(out_features, in_features))
 
     def forward(self, x):
+
         return F.linear(x, self.mask * self.weight, self.bias)
 
 

@@ -8,7 +8,7 @@ __all__ = ['DataLoader', 'TransformedData']
 
 
 class TransformedData(Dataset):
-    def __init__(self, data_dir, supervision, **kwargs):
+    def __init__(self, data_dir, supervision, similarity_file, **kwargs):
         self.data_dir = data_dir
         self.supervision = supervision
         self.X = torch.softmax(torch.as_tensor(torch.load(data_dir + '/train/' + 'X.pt')), dim=2)
@@ -20,6 +20,7 @@ class TransformedData(Dataset):
         self.lambdas = None
         self.adj = None
         self.annotated_idx = None
+        self.similarity_file = similarity_file
         if supervision == 1:
             self.annotation_free(**kwargs)
         elif supervision == 2:
@@ -49,22 +50,22 @@ class TransformedData(Dataset):
     def annotation_free(self, embeddings_file, **kwargs):
         self.kappa = self.Y_true.mean()
         self.lambdas = self.Y_true.mean(0)
-        self.adj = by_memory(**kwargs)
-        # self.adj = by_word_embeddings(embeddings_file, label2id=self.label2id, **kwargs)
+        self.adj = by_memory(self.similarity_file, **kwargs)
+        #self.adj = by_word_embeddings(embeddings_file, label2id=self.label2id, **kwargs)
 
     def scarce_annotation(self, embeddings_file, annotation_ratio=10, **kwargs):
         print(self.num_samples*annotation_ratio//100)
         self.annotated_idx = torch.randint(0, self.num_samples, (self.num_samples*annotation_ratio//100, )).long()
         self.kappa = self.Y_true[self.annotated_idx, :].mean()
         self.lambdas = self.Y_true[self.annotated_idx, :].mean(0)
-        self.adj = by_memory(**kwargs)
-        # self.adj = by_word_embeddings(embeddings_file, label2id=self.label2id, **kwargs)
+        self.adj = by_memory(self.similarity_file, **kwargs)
+        #self.adj = by_word_embeddings(embeddings_file, label2id=self.label2id, **kwargs)
 
     def domain_supervisor(self, hierarchy_file, annotation_ratio=10, **kwargs):
         self.annotated_idx = torch.randint(0, self.num_samples, (self.num_samples*annotation_ratio//100, )).long()
         self.kappa = self.Y_true.mean()
         self.lambdas = self.Y_true.mean(0)
-        self.adj = by_memory(**kwargs)
+        self.adj = by_memory(self.similarity_file, **kwargs)
         #self.adj = by_hierarchy_tree(hierarchy_file, label2id=self.label2id, **kwargs)
 
     def load_test(self):

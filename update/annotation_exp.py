@@ -11,6 +11,7 @@ if __name__ == '__main__':
     parser.add_argument("-results_dir", type=str, default="./update/outputs/reuters/")
     parser.add_argument("-supervision", type=int, default=1)
     #parser.add_argument("-annotation_ratio", type=int, default=10)
+    parser.add_argument("-similarity_file", type=str, default="./update/inputs/reuters/similarity.pt")
     parser.add_argument("-embeddings_file", type=str, default="./update/inputs/glove.6B.100d.txt")
     parser.add_argument("-hierarchy_file", type=str)
     parser.add_argument("-percentile_neg", type=float, default=0.1)
@@ -22,7 +23,7 @@ if __name__ == '__main__':
     parser.add_argument("-device")
     args = parser.parse_args()
     results = {}
-    for annotation_ratio in [1, 10, 20, 30, 40, 50]:
+    for annotation_ratio in [50]:
         results[annotation_ratio] = {}
         for seed in range(1, 11,1):
             print("annotation ratio:", annotation_ratio, "seed:", seed)

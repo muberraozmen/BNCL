@@ -7,8 +7,8 @@ from utils import *
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-data_dir", type=str, default="./update/inputs/stackex_philosophy/")
-    parser.add_argument("-results_dir", type=str, default="./update/outputs/stackex_philosophy/")
+    parser.add_argument("-data_dir", type=str, default="./update/inputs/reuters/")
+    parser.add_argument("-results_dir", type=str, default="./update/outputs/reuters/")
     parser.add_argument("-supervision", type=int, default=1)
     parser.add_argument("-annotation_ratio", type=int, default=7)
     parser.add_argument("-embeddings_file", type=str, default="./update/inputs/glove.6B.100d.txt")

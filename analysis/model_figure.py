@@ -1,6 +1,9 @@
 import torch
 import numpy as np
 
+r = torch.load("/Users/mob/Documents/PycharmProjects/BNCL/update/inputs/reuters/label2id.pt")
+s = torch.load("/Users/mob/Documents/PycharmProjects/BNCL/update/inputs/stackex_philosophy/label2id.pt")
+
 y = torch.as_tensor([1, 1, 1, 0, 0])
 A = torch.as_tensor([0.2, 0.6, 0.2])
 B = torch.as_tensor([0.7, 0.1, 0.2])

@@ -1,6 +1,4 @@
-#TODO
 import pickle
-
 import torch
 import numpy as np
 
@@ -18,36 +16,15 @@ def by_word_embeddings(embeddings_file, label2id, percentile_neg=0.4, percentile
             except:
                 pass
     label2glove = {}
-    #print(word_embeddings)
-    no_embeddings = []
-    label_embeddings = []
     for label, idx in label2id.items():
         # TODO: replace with pretrained tokenizer
         tokens = label.replace(' ', '<sep>').replace(',', '<sep>').replace('/', '<sep>').replace('-', '<sep>').split('<sep>')
-
         token_embeddings = []
         for t in tokens:
-            t = t.upper()
             if t and t in word_embeddings.keys():
-                token_embeddings.append(word_embeddings[t.upper()])
-
-            else:
-                #print(t)
-                #token_embeddings.append(torch.tensor(100.02))
-                #print(label)
-                no_embeddings.append(label)
-        if label in no_embeddings:
-            continue
-        #label_embeddings = torch.mean(torch.stack(token_embeddings, -1), -1)
-        label_embeddings.append(torch.mean(torch.stack(token_embeddings, -1), -1))
-        #label2glove[idx] = label_embeddings
-    idx = 0
-    for embeddings in label_embeddings:
-        label2glove[idx] = embeddings
-        idx += 1
-    print(no_embeddings)
-    for label in no_embeddings:
-        del label2id[label]
+                token_embeddings.append(word_embeddings[t])
+        label_embeddings = torch.mean(torch.stack(token_embeddings, -1), -1)
+        label2glove[idx] = label_embeddings
     T = torch.zeros((len(label2glove), label2glove[0].size(0)))
     for idx, embedding in label2glove.items():
         T[idx, :] = embedding
@@ -86,9 +63,7 @@ def by_random(label2id, **kwargs):
     return adj
 
 
-def by_memory(similarity_file = "",
-              percentile_neg=0.4, percentile_pos=0.6, **kwargs):
-    print("by memory:", similarity_file, percentile_neg, percentile_pos)
+def by_memory(similarity_file, percentile_neg=0.4, percentile_pos=0.6, **kwargs):
     similarity = torch.load(similarity_file)
     lower = torch.quantile(similarity, percentile_neg)
     upper = torch.quantile(similarity, percentile_pos)

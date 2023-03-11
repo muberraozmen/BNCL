@@ -10,7 +10,7 @@ if __name__ == '__main__':
     parser.add_argument("-data_dir", type=str, default="./update/inputs/reuters/")
     parser.add_argument("-results_dir", type=str, default="./update/outputs/reuters/")
     parser.add_argument("-supervision", type=int, default=1)
-    parser.add_argument("-annotation_ratio", type=int, default=10)
+    parser.add_argument("-annotation_ratio", type=int, default=7)
     parser.add_argument("-embeddings_file", type=str, default="./update/inputs/glove.6B.100d.txt")
     parser.add_argument("-similarity_file", type=str, default="./update/inputs/reuters/similarity.pt")
     parser.add_argument("-hierarchy_file", type=str)
@@ -19,7 +19,7 @@ if __name__ == '__main__':
     parser.add_argument("-batch_size", type=int, default=128)
     parser.add_argument("-num_layers", type=int, default=2)
     parser.add_argument("-num_epochs", type=int, default=30)
-    parser.add_argument("-seed", type=int, default=128)
+    parser.add_argument("-seed", type=int, default=0)
     parser.add_argument("-device")
     args = parser.parse_args()
 

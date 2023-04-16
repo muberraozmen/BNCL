@@ -43,29 +43,28 @@ class TransformedData(Dataset):
     def __getitem__(self, i):
         entailment = self.X[i, :, 2]
         contradiction = self.X[i, :, 0]
-        # target = self.Y_true[i, :]
         return entailment, contradiction
 
     def annotation_free(self, embeddings_file, **kwargs):
         self.kappa = self.Y_true.mean()
         self.lambdas = self.Y_true.mean(0)
-        self.adj = by_memory(similarity_file=self.data_dir + "/similarity.pt", **kwargs)
-        # self.adj = by_word_embeddings(embeddings_file, label2id=self.label2id, **kwargs)
+        # self.adj = by_memory(similarity_file=self.data_dir + "/similarity.pt", **kwargs)
+        self.adj = by_word_embeddings(embeddings_file, label2id=self.label2id, **kwargs)
 
     def scarce_annotation(self, embeddings_file=None, annotation_ratio=10, **kwargs):
         print(self.num_samples*annotation_ratio//100)
         self.annotated_idx = torch.randint(0, self.num_samples, (self.num_samples*annotation_ratio//100, )).long()
         self.kappa = self.Y_true[self.annotated_idx, :].mean()
         self.lambdas = self.Y_true[self.annotated_idx, :].mean(0)
-        self.adj = by_memory(similarity_file=self.data_dir + "/similarity.pt", **kwargs)
-        # self.adj = by_word_embeddings(embeddings_file, label2id=self.label2id, **kwargs)
+        # self.adj = by_memory(similarity_file=self.data_dir + "/similarity.pt", **kwargs)
+        self.adj = by_word_embeddings(embeddings_file, label2id=self.label2id, **kwargs)
 
     def domain_supervisor(self, hierarchy_file=None, annotation_ratio=10, **kwargs):
         self.annotated_idx = torch.randint(0, self.num_samples, (self.num_samples*annotation_ratio//100, )).long()
         self.kappa = self.Y_true.mean()
         self.lambdas = self.Y_true.mean(0)
-        self.adj = by_memory(similarity_file=self.data_dir + "/similarity.pt", **kwargs)
-        # self.adj = by_hierarchy_tree(hierarchy_file, label2id=self.label2id, **kwargs)
+        # self.adj = by_memory(similarity_file=self.data_dir + "/similarity.pt", **kwargs)
+        self.adj = by_hierarchy_tree(hierarchy_file, label2id=self.label2id, **kwargs)
 
     def load_test(self):
         data = torch.softmax(torch.as_tensor(torch.load(self.data_dir + '/test/' + 'X.pt')), dim=2)

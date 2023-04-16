@@ -1,9 +1,26 @@
+import numpy as np
 import random
+import pickle
+import traceback
 import xml.etree.ElementTree as etree
 from collections import defaultdict
+from bs4 import BeautifulSoup
 from tqdm import tqdm
 import re
+
+import datasets
 CLEANR = re.compile('<.*?>')
+
+
+def cleanhtml(raw_html):
+  cleantext = re.sub(CLEANR, '', raw_html)
+  return cleantext
+
+
+def pullTags(raw_html):
+    tags = re.findall(CLEANR, raw_html)
+    tags = [tag.replace("<", "").replace(">", "").replace("-", " ") for tag in tags]
+    return tags
 
 
 def stackex_philosophy(data_root):
@@ -38,7 +55,329 @@ def stackex_philosophy(data_root):
     #         if line.startswith("<row Id"):
 
 
-def reuters(data_root):
+def RCV1(data_root, sample=False, start_index = 0):
+    label_vocab = {}
+    with open(data_root + '/labels_vocab.txt') as f:
+        for line in f:
+            description = line.split("child-description: ")[1].strip("\n")
+            label = line.split("child: ")[1].split(" ")[0]
+            if description != "No Description":
+                label_vocab[label] = description
+    labels = {}
+
+    with open(data_root + '/rcv1-v2.topics.qrels') as f:
+        for line in f:
+            label, DID, ignore = line.split(" ")
+            sample_idx = int(DID)
+
+
+            if sample_idx in labels.keys():
+                labels[sample_idx].append(label_vocab[label])
+            else:
+                labels[sample_idx] = [label_vocab[label]]
+
+    idx = 0
+    label2id = {}
+    for label in label_vocab.values():
+        label2id[label] = int(idx)
+        idx = idx + 1
+    prior = np.zeros((len(label2id), len(label2id)))
+    with open(data_root + '/hierarchy.txt') as f:
+        for line in f:
+            parent = line.split("parent: ")[1].split("child:")[0].strip()
+            child = line.split("child: ")[1].split("child-description")[0].strip()
+            if parent != "Root" and child != "Root":
+                prior[label2id[label_vocab[parent]], label2id[label_vocab[child]]] = 1
+
+    train = {}
+
+    with open(data_root + '/lyrl2004_tokens_train.dat') as f:
+        print("train data DIDs:")
+        DID = 0
+
+        text = ""
+        for line in f:
+            if ".I" in line:
+
+                if DID != 0:
+                    train[text.strip()] = labels[DID]
+                    text = ""
+                DID = int(line.split(".I ")[1])
+            elif ".W" not in line and len(line) > 1:
+                text += line.strip("\n") + " "
+        train[text.strip()] = labels[DID]
+    if sample is True:
+        reduced = random.sample(list(train.items()), 2000)
+        train_idx = random.sample(range(2000), 1000)
+        test_idx = set(range(2000)) - set(train_idx)
+        reduced_train = {reduced[idx][0]: reduced[idx][1] for idx in train_idx}
+        reduced_test = {reduced[idx][0]: reduced[idx][1] for idx in test_idx}
+        return {"train": reduced_train, "test": reduced_test, "label2id": label2id, "prior": prior}
+
+    test = {}
+    for file in ["lyrl2004_tokens_test_pt0.dat"]:
+         # "lyrl2004_tokens_test_pt1.dat", "lyrl2004_tokens_test_pt2.dat", "lyrl2004_tokens_test_pt3.dat"
+        with open(data_root + '/' + file) as f:
+            DID = 0
+            print("test DIDs:")
+            text = ""
+            for line in f:
+                if ".I" in line:
+                    if DID != 0 :
+                        test[text.strip()] = labels[DID]
+                        text = ""
+                    DID = int(line.split(".I ")[1])
+                elif ".W" not in line and len(line) > 1:
+
+                    text += line.strip("\n") + " "
+
+            test[text.strip()] = labels[DID]
+
+    return {"train": train, "test": test, "label2id": label2id, "prior": prior}
+
+
+def delicious():
+    #available at https://archive.ics.uci.edu/ml/datasets/DeliciousMIL%3A+A+Data+Set+for+Multi-Label+Multi-Instance+Learning+with+Instance+Labels
+    data_root = '/home/muberra/Desktop/PycharmProjects/XMTC/resources/DeliciousMIL/Data'
+    vocab = {}
+    data = {}
+    train = {}
+    test = {}
+    test_labels = []
+    train_labels = []
+    label_vocab = {}
+    with open(data_root + '/vocabs.txt') as f:
+        for line in f:
+            (val, key) = line.split(',')
+            vocab[int(key)] = val
+    with open(data_root + '/labels.txt') as f:
+        for line in f:
+            (val, key) = line.split(',')
+            label_vocab[int(key)] = val
+    with open(data_root + '/train-label.dat') as f:
+        for line in f:
+            labelText = []
+            labelVector = np.nonzero([int(entry) for entry in line.split(" ") ])
+            for label in labelVector[0]:
+                labelText.append(label_vocab[label])
+            train_labels.append(labelText)
+    i = 0
+    with open(data_root + '/train-data.dat') as f:
+        for line in f:
+            text = ""
+            for word in line.split(" "):
+                if word[0] != "<":
+                    text += vocab[int(word)] + " "
+            train[text] = train_labels[i]
+            i = i + 1
+    with open(data_root + '/test-label.dat') as f:
+        for line in f:
+            labelText = []
+            labelVector = np.nonzero([int(entry) for entry in line.split(" ") ])
+            for label in labelVector[0]:
+                labelText.append(label_vocab[label])
+            test_labels.append(labelText)
+    i = 0
+    with open(data_root + '/test-data.dat') as f:
+        for line in f:
+            text = ""
+            for word in line.split(" "):
+                if word[0] != "<":
+                    text += vocab[int(word)] + " "
+            test[text] = test_labels[i]
+            i = i + 1
+    return {"train": train, "test": test}, label_vocab.values()
+'''
+Set Reducer:
+reduces the dataset for weakly supervised learning.
+dataset: the full dataset
+label2id: the list of all distinct labels
+size: desired output dataset size
+e_label: expected number of labels
+k: fraction of selected documents that will have more than e_label labels
+'''
+
+
+def set_reducer(dataset, label2id, size, e_label, k, seed = 0):
+    r = random.Random()
+    excluded = []
+    if seed != 0:
+        r.seed(seed)
+    reduced = {}
+    moreLabel = []
+    lessLabel = []
+    for label in dataset.values():
+        if len(label) > e_label:
+            moreLabel.append(label)
+        if len(label) < e_label:
+            lessLabel.append(label)
+    for label in label2id.values():
+        if label == 'GROUNDNUT-OIL':
+            print()
+        rand = r.random()
+        if rand < k:
+            moreLabelOptions = [labelList for labelList in moreLabel if label in labelList]
+            if len(moreLabelOptions) == 0:
+                lessLabelOptions = [labelList for labelList in lessLabel if label in labelList]
+                if len(lessLabelOptions) == 0:
+                    print(label)
+                    excluded.append(label)
+                    continue
+                selectedLessLabelList = r.choice(lessLabelOptions)
+                choiceList = list(dataset.keys())[list(dataset.values()).index(selectedLessLabelList)]
+                if isinstance(choiceList, str):
+                    chosenDoc = choiceList
+                else:
+                    chosenDoc = r.choice(list(dataset.keys())[list(dataset.values()).index(selectedLessLabelList)])
+                if chosenDoc in reduced.keys():
+                    reduced[chosenDoc] = reduced[chosenDoc] + (selectedLessLabelList)
+                else:
+                    reduced[chosenDoc] = selectedLessLabelList
+            else:
+                selectedMoreLabelList = r.choice(moreLabelOptions)
+                if chosenDoc in reduced.keys():
+                    reduced[chosenDoc] = reduced[chosenDoc] + (selectedMoreLabelList)
+                else:
+                    reduced[chosenDoc] = selectedMoreLabelList
+        else:
+            lessLabelOptions = [labelList for labelList in lessLabel if label in labelList]
+            if len(lessLabelOptions) == 0:
+                moreLabelOptions = [labelList for labelList in moreLabel if label in labelList]
+                if len(moreLabelOptions) == 0:
+                    print(label)
+                    excluded.append(label)
+                    continue
+                selectedMoreLabelList = r.choice(moreLabelOptions)
+
+                choiceList = list(dataset.keys())[list(dataset.values()).index(selectedMoreLabelList)]
+                if isinstance (choiceList, str):
+                    chosenDoc = choiceList
+                else:
+                    chosenDoc = r.choice(list(dataset.keys())[list(dataset.values()).index(selectedMoreLabelList)])
+                if chosenDoc in reduced.keys():
+                    reduced[chosenDoc] = reduced[chosenDoc] + (selectedMoreLabelList)
+                else:
+                    reduced[chosenDoc] = selectedMoreLabelList
+            else:
+                selectedLessLabelList = r.choice(lessLabelOptions)
+                choiceList = list(dataset.keys())[list(dataset.values()).index(selectedLessLabelList)]
+                if isinstance(choiceList, str):
+                    chosenDoc = choiceList
+                else:
+                    chosenDoc = r.choice(list(dataset.keys())[list(dataset.values()).index(selectedLessLabelList)])
+                if chosenDoc in reduced.keys():
+                    reduced[chosenDoc].append(selectedLessLabelList)
+                else:
+                    reduced[chosenDoc] = selectedLessLabelList
+            print(len(reduced))
+    while len(reduced) < size:
+
+        randChoice = r.choice(list(dataset.keys()))
+        if randChoice not in reduced.keys():
+            reduced[randChoice] = dataset[randChoice]
+            x = reduced[randChoice]
+            #print(len(reduced))
+    #print(r.random())
+    return reduced
+
+
+def ReutersHierarchyBuilder(topics):
+    hierarchy = {}
+    leaves = []
+    for i in range(len(topics)):
+        if i < 3:
+            if i == 0:
+                hierarchy["Root"] = []
+            hierarchy["Root"].append(topics[i])
+            leaves.append(topics[i])
+        elif i < 19:
+            if i == 3:
+                hierarchy["Economic Indicator Codes"] = []
+            hierarchy["Economic Indicator Codes"].append(topics[i])
+            leaves.append(topics[i])
+        elif i < 45:
+            if i == 19:
+                hierarchy["Currency Codes"] = []
+            hierarchy["Currency Codes"].append(topics[i])
+            leaves.append(topics[i])
+        elif i < 47:
+            if i == 45:
+                hierarchy["Corporate Codes"] = []
+            hierarchy["Corporate Codes"].append(topics[i])
+            leaves.append(topics[i])
+        elif i < 125:
+            if i == 47:
+                hierarchy["Commodity Codes"] = []
+                hierarchy["Commodity Codes"].append("CASTORSEED")
+                hierarchy["CASTORSEED"] = []
+                hierarchy["Commodity Codes"].append("COCONUT")
+                hierarchy["COCONUT"] = []
+                hierarchy["Commodity Codes"].append("CORN")
+                hierarchy["CORN"] = []
+                hierarchy["Commodity Codes"].append("COTTON")
+                hierarchy["COTTON"] = []
+                hierarchy["Commodity Codes"].append("GROUNDNUT")
+                hierarchy["GROUNDNUT"] = []
+                hierarchy["Commodity Codes"].append("LINSEED")
+                hierarchy["LINSEED"] = []
+                hierarchy["Commodity Codes"].append("PALMKERNEL")
+                hierarchy["PALMKERNEL"] = []
+                hierarchy["Commodity Codes"].append("RAPESEED")
+                hierarchy["RAPESEED"] = []
+                hierarchy["Commodity Codes"].append("SOYBEAN")
+                hierarchy["SOYBEAN"] = []
+                hierarchy["Commodity Codes"].append("SUNSEED")
+                hierarchy["SUNSEED"] = []
+                hierarchy["Commodity Codes"].append("TUNG")
+                hierarchy["TUNG"] = []
+            if "CASTOR" in topics[i] and topics[i] != "CASTORSEED":
+                hierarchy["CASTORSEED"].append(topics[i])
+                leaves.append(topics[i])
+            elif  "COCONUT" in topics[i] and topics[i] != "COCONUT" :
+                hierarchy["COCONUT"].append(topics[i])
+                leaves.append(topics[i])
+            elif "CORN" in topics[i] and topics[i] != "CORN" :
+                hierarchy["CORN"].append(topics[i])
+                leaves.append(topics[i])
+            elif "COTTON" in topics[i] and topics[i] != "COTTON":
+                hierarchy["COTTON"].append(topics[i])
+                leaves.append(topics[i])
+
+            elif "GROUNDNUT" in topics[i] and topics[i] != "GROUNDNUT":
+                hierarchy["GROUNDNUT"].append(topics[i])
+                leaves.append(topics[i])
+            elif "LIN" in topics[i] and topics[i] != "LINSEED":
+                hierarchy["LINSEED"].append(topics[i])
+                leaves.append(topics[i])
+            elif "PALM" in topics[i] and topics[i] != "PALMKERNEL":
+                hierarchy["PALMKERNEL"].append(topics[i])
+                leaves.append(topics[i])
+            elif "RAPE" in topics[i] and topics[i] != "RAPESEED":
+                hierarchy["RAPESEED"].append(topics[i])
+                leaves.append(topics[i])
+            elif "SOY" in topics[i] and topics[i] != "SOYBEAN":
+                hierarchy["SOYBEAN"].append(topics[i])
+                leaves.append(topics[i])
+            elif "SUN" in topics[i] and topics[i] != "SUNSEED":
+                hierarchy["SUNSEED"].append(topics[i])
+                leaves.append(topics[i])
+            elif "TUNG" in topics[i] and topics[i] != "TUNG":
+                hierarchy["TUNG"].append(topics[i])
+                leaves.append(topics[i])
+            else:
+                hierarchy["Commodity Codes"].append(topics[i])
+                leaves.append(topics[i])
+        else:
+            if i == 125:
+                hierarchy["Energy Codes"] = []
+            hierarchy["Energy Codes"].append(topics[i])
+            leaves.append(topics[i])
+    with open("C:/Users/jcotn/PycharmProjects/BNCL/update/inputs/reuters/hierarchy_file", "wb") as f:
+        pickle.dump(hierarchy, f)
+    return hierarchy, leaves
+
+
+def Reuters(data_root):
     topics_vocab = {}
     exchanges_vocab = {}
     orgs_vocab = {}
@@ -144,12 +483,14 @@ def reuters(data_root):
     topics_vocab["palmkernel"] = "PALM KERNEL"
     topics_vocab["sunseed"] = "SUN SEED"
 
+
     with open(data_root + '/all-places-strings.lc.txt') as f:
         for line in f:
             all_places.append(line.strip())
 
     orgs_vocab["geplacea"] = "Grupo de Paises Latinoamericanos y del Caribe Exportadores de Azucar [Group of Latin American and Caribbean Sugar Exporting Countries]"
 
+    #splits = datasets.SplitGenerator( name=datasets.Split.TRAIN, gen_kwargs={"filepaths": filepaths, "split": "TRAIN", "files": dl_manager.iter_archive(archive)}
     filepaths = ["/reut2-" + "%03d" % i + ".sgm" for i in range(22)]
     trainsamples, trainmetadata = _generate_examples(filepaths, "TRAIN", data_root,  people_vocab, orgs_vocab, topics_vocab, exchanges_vocab)
     testsamples, testmetadata = _generate_examples(filepaths, "TEST", data_root,  people_vocab, orgs_vocab, topics_vocab, exchanges_vocab)
@@ -158,113 +499,6 @@ def reuters(data_root):
     metadata = {"train": trainmetadata, "test": testmetadata}
     return {"samples": samples, "metadata": metadata, "all places": all_places, "people_vocab": people_vocab,
             "orgs_vocab": orgs_vocab, "topics_vocab": topics_vocab, "exchanges_vocab": exchanges_vocab}
-
-
-
-'''
-Set Reducer:
-reduces the dataset for weakly supervised learning.
-dataset: the full dataset
-label2id: the list of all distinct labels
-size: desired output dataset size
-e_label: expected number of labels
-k: fraction of selected documents that will have more than e_label labels
-'''
-
-
-def set_reducer(dataset, label2id, size, e_label, k, seed = 0):
-    r = random.Random()
-    excluded = []
-    if seed != 0:
-        r.seed(seed)
-    reduced = {}
-    moreLabel = []
-    lessLabel = []
-    for label in dataset.values():
-        if len(label) > e_label:
-            moreLabel.append(label)
-        if len(label) < e_label:
-            lessLabel.append(label)
-    for label in label2id.values():
-        if label == 'GROUNDNUT-OIL':
-            print()
-        rand = r.random()
-        if rand < k:
-            moreLabelOptions = [labelList for labelList in moreLabel if label in labelList]
-            if len(moreLabelOptions) == 0:
-                lessLabelOptions = [labelList for labelList in lessLabel if label in labelList]
-                if len(lessLabelOptions) == 0:
-                    print(label)
-                    excluded.append(label)
-                    continue
-                selectedLessLabelList = r.choice(lessLabelOptions)
-                choiceList = list(dataset.keys())[list(dataset.values()).index(selectedLessLabelList)]
-                if isinstance(choiceList, str):
-                    chosenDoc = choiceList
-                else:
-                    chosenDoc = r.choice(list(dataset.keys())[list(dataset.values()).index(selectedLessLabelList)])
-                if chosenDoc in reduced.keys():
-                    reduced[chosenDoc] = reduced[chosenDoc] + (selectedLessLabelList)
-                else:
-                    reduced[chosenDoc] = selectedLessLabelList
-            else:
-                selectedMoreLabelList = r.choice(moreLabelOptions)
-                if chosenDoc in reduced.keys():
-                    reduced[chosenDoc] = reduced[chosenDoc] + (selectedMoreLabelList)
-                else:
-                    reduced[chosenDoc] = selectedMoreLabelList
-        else:
-            lessLabelOptions = [labelList for labelList in lessLabel if label in labelList]
-            if len(lessLabelOptions) == 0:
-                moreLabelOptions = [labelList for labelList in moreLabel if label in labelList]
-                if len(moreLabelOptions) == 0:
-                    print(label)
-                    excluded.append(label)
-                    continue
-                selectedMoreLabelList = r.choice(moreLabelOptions)
-
-                choiceList = list(dataset.keys())[list(dataset.values()).index(selectedMoreLabelList)]
-                if isinstance (choiceList, str):
-                    chosenDoc = choiceList
-                else:
-                    chosenDoc = r.choice(list(dataset.keys())[list(dataset.values()).index(selectedMoreLabelList)])
-                if chosenDoc in reduced.keys():
-                    reduced[chosenDoc] = reduced[chosenDoc] + (selectedMoreLabelList)
-                else:
-                    reduced[chosenDoc] = selectedMoreLabelList
-            else:
-                selectedLessLabelList = r.choice(lessLabelOptions)
-                choiceList = list(dataset.keys())[list(dataset.values()).index(selectedLessLabelList)]
-                if isinstance(choiceList, str):
-                    chosenDoc = choiceList
-                else:
-                    chosenDoc = r.choice(list(dataset.keys())[list(dataset.values()).index(selectedLessLabelList)])
-                if chosenDoc in reduced.keys():
-                    reduced[chosenDoc].append(selectedLessLabelList)
-                else:
-                    reduced[chosenDoc] = selectedLessLabelList
-            print(len(reduced))
-    while len(reduced) < size:
-
-        randChoice = r.choice(list(dataset.keys()))
-        if randChoice not in reduced.keys():
-            reduced[randChoice] = dataset[randChoice]
-            x = reduced[randChoice]
-            #print(len(reduced))
-    #print(r.random())
-    return reduced
-
-
-
-def cleanhtml(raw_html):
-  cleantext = re.sub(CLEANR, '', raw_html)
-  return cleantext
-
-
-def pullTags(raw_html):
-    tags = re.findall(CLEANR, raw_html)
-    tags = [tag.replace("<", "").replace(">", "").replace("-", " ") for tag in tags]
-    return tags
 
 
 def _generate_examples(filepaths, split, data_root, people_vocab, orgs_vocab, topics_vocab, exchanges_vocab):

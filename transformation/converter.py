@@ -1,8 +1,6 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
-import time
 import os
-import readers
 
 
 class DataConverter(object):
@@ -33,10 +31,10 @@ class DataConverter(object):
                 pass
         self.X = torch.stack(X, dim=0)
         self.Y = torch.stack(Y, dim=0)
-        self.save_data(data_dir)
+        if data_dir is not None:
+            self.save_data(data_dir)
 
     def tokenize_premise(self, premise):
-        """ https://huggingface.co/docs/transformers/pad_truncation """
         return self.tokenizer.encode(premise, return_tensors='pt', truncation=True, max_length=128)
 
     def tokenize_hypothesis(self, label):
@@ -55,9 +53,6 @@ class DataConverter(object):
         inputs = {}
         for idx, hypothesis in self.id2hypothesis.items():
             inputs[idx] = torch.cat((premise, hypothesis), dim=1)
-        # max_length = max([i.squeeze().numel() for i in inputs])
-        # inputs = [torch.nn.functional.pad(i, pad=(0, max_length - i.numel()), mode='constant', value=self.tokenizer.pad_token_id) for i in inputs]
-        # torch.stack(inputs, dim=0).squeeze()
         return inputs
 
     def onehot(self, tgt):
@@ -85,36 +80,3 @@ class DataConverter(object):
         torch.save(self.X.cpu().numpy(), data_dir + '/X.pt')
         torch.save(self.Y.cpu().numpy(), data_dir + '/Y_true.pt')
 
-
-device = "cuda" if torch.cuda.is_available() else "cpu"
-
-data_root = "/home/muberra/scratch/BNCL/transformation/inputs/philosophy.stackexchange.com/"
-results_root = "/home/muberra/scratch/BNCL/transformation/outputs/stackex_philosophy/per100/"
-# data_root = "/Users/mob/Documents/PycharmProjects/BNCL/transformation/inputs/philosophy.stackexchange.com/"
-# results_root = "/Users/mob/Documents/PycharmProjects/BNCL/transformation/outputs/stackex_philosophy/"
-if not os.path.exists(results_root):
-    os.makedirs(results_root)
-data = readers.stackex_philosophy(data_root)
-label2id = {}
-i = 0
-for label in data[1]:
-    label2id[label] = i
-    i = i + 1
-torch.save(label2id, results_root + '/label2id.pt')
-DataConverter(data[0], label2id, device=device, data_dir=results_root)
-print()
-
-# data_root = '/Users/mob/Documents/PycharmProjects/BNCL/transformation/inputs/reuters21578'
-# results_root = "/Users/mob/Documents/PycharmProjects/BNCL/transformation/outputs/reuters21578/"
-# if not os.path.exists(results_root):
-#     os.makedirs(results_root)
-# data = readers.Reuters(data_root)
-# label2id = {}
-# i = 0
-# for label in data["topics_vocab"].values():
-#     label2id[label.upper()] = i
-#     i = i + 1
-# torch.save(label2id, results_root + '/label2id.pt')
-# DataConverter(data["samples"]["train"], label2id, device=device, data_dir=results_root + "full/train/")
-# DataConverter(data["samples"]["test"], label2id, device=device, data_dir=results_root + "full/test/")
-# print()

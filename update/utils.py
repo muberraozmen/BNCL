@@ -10,7 +10,22 @@ import torch
 import numpy as np
 from sklearn.metrics import accuracy_score, hamming_loss, f1_score
 
-
+def cluster(lambdas, n, start=0.7, stop=0.0001):
+    k_range = np.linspace(0.001, 0.3, num=n)
+    k_range = np.concatenate([[0], k_range, [1]])
+    clusters = np.zeros(len(lambdas))
+    means = np.zeros(n)
+    counts = np.zeros(n)
+    for i in range(len(lambdas)):
+        for k in range(len(k_range)-1):
+            if lambdas[i] > k_range[k] and lambdas[i] < k_range[k+1]:
+                clusters[i] = k
+                means[k] += lambdas[i]
+                counts[k] += 1
+    for i in range(len(means)):
+        if counts[i] != 0:
+            means[i] = means[i]/counts[i]
+    return clusters, means, counts, k_range[1:-1]
 def get_logger(results_dir, name='log'):
     config_dict = {"version": 1,
                    "formatters": {"base": {"format": "%(message)s"}},

@@ -9,7 +9,7 @@ if __name__ == '__main__':
     parser.add_argument("-data_dir", type=str, default="C:/Users/jcotn/OneDrive/Desktop/XMTC/resources/stackexchange_philosophy/first5000")
     parser.add_argument("-results_dir", type=str, default="C:/Users/jcotn/PycharmProjects/BNCL/update/outputs/stackex/k_clusters")
     parser.add_argument("-supervision", type=int, default=1)
-    parser.add_argument("-annotation_ratio", type=int, default=7)
+    parser.add_argument("-annotation_ratio", type=int, default=10)
     parser.add_argument("-embeddings_file", type=str, default="./update/inputs/glove.6B.100d.txt")
     parser.add_argument("-k_lambdas", type=int, default=10)
     #parser.add_argument("-similarity_file", type=str, default="./update/inputs/reuters/similarity.pt")

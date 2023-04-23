@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 
-__all__ = ['by_word_embeddings', 'by_memory']
+__all__ = ['by_word_embeddings', 'by_memory', 'by_bert_sentence_encoding']
 
 
 def by_word_embeddings(embeddings_file, label2id, percentile_neg=0.1, percentile_pos=0.9, **kwargs):
@@ -38,6 +38,30 @@ def by_word_embeddings(embeddings_file, label2id, percentile_neg=0.1, percentile
 
 def by_memory(similarity_file, percentile_neg=0.1, percentile_pos=0.9, **kwargs):
     similarity = torch.load(similarity_file)
+    lower = torch.quantile(similarity, percentile_neg)
+    upper = torch.quantile(similarity, percentile_pos)
+    adj = 1 * (similarity >= upper) - 1 * (similarity <= lower)
+    return adj
+
+
+def by_bert_sentence_encoding(label2id, percentile_neg=0.1, percentile_pos=0.9, **kwargs):
+    from sentence_transformers import SentenceTransformer
+    model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+
+    label2bert = {}
+    counter = 0
+    for label, idx in label2id.items():
+        label_embeddings = model.encode(label)
+        label2bert[counter] = label_embeddings
+        counter = counter + 1
+
+    T = torch.zeros((len(label2bert), label2bert[0].size))
+    for idx, embedding in label2bert.items():
+        T[idx, :] = torch.Tensor(embedding)
+    norm = torch.linalg.norm(T, dim=1).unsqueeze(1)
+    similarity = torch.matmul(T, T.transpose(0, 1)) / torch.matmul(norm, norm.transpose(0, 1))
+    similarity = torch.nan_to_num(similarity, nan=similarity.nanmedian())
+    similarity = similarity.fill_diagonal_(similarity.nanmedian())
     lower = torch.quantile(similarity, percentile_neg)
     upper = torch.quantile(similarity, percentile_pos)
     adj = 1 * (similarity >= upper) - 1 * (similarity <= lower)

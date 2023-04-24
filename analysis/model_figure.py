@@ -1,8 +1,8 @@
 import torch
 import numpy as np
 
-r = torch.load("/Users/mob/Documents/PycharmProjects/BNCL/update/inputs/reuters/label2id.pt")
-s = torch.load("/Users/mob/Documents/PycharmProjects/BNCL/update/inputs/stackex_philosophy/label2id.pt")
+r = torch.load("C:/Users/jcotn/PycharmProjects/BNCL/update/inputs/reuters/label2id.pt")
+s = torch.load("C:/Users/jcotn/PycharmProjects/BNCL/update/inputs/stackexchange_philosophy/label2id.pt")
 
 y = torch.as_tensor([1, 1, 1, 0, 0])
 A = torch.as_tensor([0.2, 0.6, 0.2])

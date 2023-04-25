@@ -6,13 +6,12 @@ from utils import *
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-data_dir", type=str, default="C:/Users/jcotn/OneDrive/Desktop/XMTC/resources/stackexchange_philosophy/first5000")
-    parser.add_argument("-results_dir", type=str, default="C:/Users/jcotn/PycharmProjects/BNCL/update/outputs/stackex/k_clusters")
+    parser.add_argument("-data_dir", type=str, default="./update/inputs/reuters")
+    parser.add_argument("-results_dir", type=str, default="./update/outputs/reuters")
     parser.add_argument("-supervision", type=int, default=1)
     parser.add_argument("-annotation_ratio", type=int, default=10)
     parser.add_argument("-embeddings_file", type=str, default="./update/inputs/glove.6B.100d.txt")
-    parser.add_argument("-k_lambdas", type=int, default=10)
-    #parser.add_argument("-similarity_file", type=str, default="./update/inputs/reuters/similarity.pt")
+    parser.add_argument("-cluster_lambdas", type=int, default=0)
     parser.add_argument("-hierarchy_file", type=str)
     parser.add_argument("-percentile_neg", type=float, default=0.1)
     parser.add_argument("-percentile_pos", type=float, default=0.9)
@@ -38,10 +37,11 @@ if __name__ == '__main__':
     logger.info(args)
 
     data = TransformedData(**vars(args))
-    if args.k_lambdas != 0:
-        clusters, means, counts, k_range = cluster(data.lambdas, args.k_lambdas)
+    if args.cluster_lambdas != 0:
+        clusters, means, counts, k_range = cluster(data.lambdas, args.cluster_lambdas)
         for i in range(len(clusters)):
             data.lambdas[i] = means[int(clusters[i])]
+            
     train_loader = DataLoader(data, batch_size=args.batch_size, shuffle=False, drop_last=False)
     if data.annotated_idx is not None:
         annotated_data = data.load_annotated()
@@ -69,6 +69,7 @@ if __name__ == '__main__':
         logger.info("- average training loss = {:.0f}".format(epoch_loss))
         losses.append(epoch_loss)
         test_predictions = runner.test(test_entailments, test_contradictions)
+
         metrics = evaluation(targets=test_targets.numpy(), predictions=test_predictions.detach().cpu().numpy())
 
         logger.info("- test performance:")
@@ -96,9 +97,9 @@ if __name__ == '__main__':
     for i, (key, value) in enumerate(metrics_best.items()):
         logger.info('- {:} = {:}'.format(key, np.round_(value, decimals=4)))
 
-    if args.k_lambdas != 0:
+    if args.cluster_lambdas != 0:
         f = open(args.results_dir + "/lambda_cluster_results", "a")
-        f.write("supervision: "+str(args.supervision)+" k_lambda: "+str(args.k_lambdas))
+        f.write("supervision: "+str(args.supervision)+" k_lambda: "+str(args.cluster_lambdas))
         f.close()
         for i, (key, value) in enumerate(metrics_best.items()):
             # logger.info('- {:} = {:}'.format(key, np.round_(value, decimals=4)))
@@ -108,4 +109,24 @@ if __name__ == '__main__':
         f = open(args.results_dir+"/lambda_cluster_results", "a")
         f.write("\n")
         f.close()
+
+    logger.info("---- Bootstrap Testing-----")
+    bootstraps = {}
+    for i, (key, value) in enumerate(metrics.items()):
+        test_results = torch.load(results_dir + key + '_predictions.pt')
+        y_true = test_results['targets']
+        y_pred = test_results['predictions']
+        num_samples = y_true.shape[0]
+        temp = []
+        for k in range(1000):
+            sample_ids = random.choices(range(num_samples), k=100)
+            metrics = evaluation(targets=test_targets[sample_ids, :],
+                                 predictions=test_predictions[sample_ids, :])
+            temp.append(metrics[key])
+        bootstraps[key] = np.asarray(temp)
+    torch.save(bootstraps, results_dir + 'bootstraps.pt')
+
+
+
+
 

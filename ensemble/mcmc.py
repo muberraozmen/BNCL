@@ -79,7 +79,12 @@ def metropolis_hasting(data_dir, prior_alpha=1, prior_beta=100, transition_epsil
         lambdas_suggested = transition_function(lambdas_current, transition_epsilon)
         lambdas_current = update_lambdas(X, avg_neutrals, lambdas_current, lambdas_suggested, lambda_prior)
         samples.append(lambdas_current)
+    torch.save(samples, 'data')
     return samples
 
 
-metropolis_hasting(data_dir="/Users/mob/Documents/PycharmProjects/BNCL/update/inputs/reuters/train/X.pt")
+data_folder = "/Users/mob/Documents/PycharmProjects/BNCL/update/inputs/"
+for dataset in ["stackex_philosophy", "reuters"]:
+    samples = metropolis_hasting(data_dir=data_folder + "/" + dataset + "/train/X.pt")
+    torch.save(samples, data_folder + "/" + dataset + "/lambdas.pt")
+

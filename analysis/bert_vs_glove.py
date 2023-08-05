@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import math
 
 glove_dir = "/Users/mob/Documents/PycharmProjects/BNCL/update/outputs/reuters/GloVe_Bootstraps/"
 bert_dir = "/Users/mob/Documents/PycharmProjects/BNCL/update/outputs/reuters/Bert_Bootstraps/"
@@ -37,9 +38,8 @@ for k in range(3):
     bert_results[settings_name_map[k]] = seeds_bert
 
 
-results_dir = "/Users/mob/Desktop/plots/"
-df = pd.DataFrame(columns=['ACC', 'HA', 'ebF1', 'miF1', 'maF1', 'SUPERVISION', 'GRAPH'])
-for key in ['ACC', 'HA', 'ebF1', 'miF1', 'maF1']:
+df = pd.DataFrame(columns=['ACC', 'HA', 'ebF1', 'miF1', 'SUPERVISION', 'GRAPH'])
+for key in ['ACC', 'HA', 'ebF1', 'miF1']:
     for k in settings_name_map:
         g = pd.DataFrame(glove_results[k])
         g['SUPERVISION'] = [k for i in range(len(g))]
@@ -49,6 +49,19 @@ for key in ['ACC', 'HA', 'ebF1', 'miF1', 'maF1']:
         b['SUPERVISION'] = [k for i in range(len(b))]
         b['GRAPH'] = ["Bert" for i in range(len(b))]
         df = df.append(b)
+
+stats = df.groupby(['SUPERVISION', 'GRAPH'])[['ACC', 'HA', 'ebF1', 'miF1']].agg(['mean', 'count', 'std'])
+CI = pd.DataFrame(columns=['ACC', 'HA', 'ebF1', 'miF1'], index=stats.index)
+for i in stats.index:
+    for j in ['ACC', 'HA', 'ebF1', 'miF1']:
+        m, c, s = stats.loc[i].loc[j]
+        lower = round(m - 1.96*s/math.sqrt(c), 3)
+        upper = round(m + 1.96*s/math.sqrt(c), 3)
+        temp = '[' + str(lower) + ', ' + str(upper) + ']'
+        CI.loc[i][j] = temp
+print(CI.to_markdown())
+
+results_dir = "/Users/mob/Desktop/plots/"
 
 for key in ['ACC', 'HA', 'ebF1', 'miF1', 'maF1']:
     plt.plot()

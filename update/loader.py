@@ -47,7 +47,7 @@ class TransformedData(Dataset):
 
     def annotation_free(self, embeddings_file, **kwargs):
         self.kappa = self.Y_true.mean()
-        #self.lambdas = self.Y_true.mean(0)
+        self.lambdas = self.Y_true.mean(0)
         # self.adj = by_memory(similarity_file=self.data_dir + "/similarity.pt", **kwargs)
         self.adj = by_memory(similarity_file=self.data_dir + "/bert_similarity.pt", **kwargs)
         # self.adj = by_word_embeddings(embeddings_file, label2id=self.label2id, **kwargs)
@@ -57,7 +57,7 @@ class TransformedData(Dataset):
         print(self.num_samples*annotation_ratio//100)
         self.annotated_idx = torch.randint(0, self.num_samples, (self.num_samples*annotation_ratio//100, )).long()
         self.kappa = self.Y_true[self.annotated_idx, :].mean()
-        #self.lambdas = self.Y_true[self.annotated_idx, :].mean(0)
+        self.lambdas = self.Y_true[self.annotated_idx, :].mean(0)
         # self.adj = by_memory(similarity_file=self.data_dir + "/similarity.pt", **kwargs)
         self.adj = by_memory(similarity_file=self.data_dir + "/bert_similarity.pt", **kwargs)
         # self.adj = by_word_embeddings(embeddings_file, label2id=self.label2id, **kwargs)
@@ -66,7 +66,7 @@ class TransformedData(Dataset):
     def domain_supervisor(self, hierarchy_file=None, annotation_ratio=10, **kwargs):
         self.annotated_idx = torch.randint(0, self.num_samples, (self.num_samples*annotation_ratio//100, )).long()
         self.kappa = self.Y_true.mean()
-        #self.lambdas = self.Y_true.mean(0)
+        self.lambdas = self.Y_true.mean(0)
         # self.adj = by_memory(similarity_file=self.data_dir + "/similarity.pt", **kwargs)
         self.adj = by_memory(similarity_file=self.data_dir + "/bert_similarity.pt", **kwargs)
         # self.adj = by_word_embeddings(hierarchy_file, label2id=self.label2id, **kwargs)

@@ -69,7 +69,7 @@ def transition_function(lambdas, transition_epsilon):
     return lambdas_suggested
 
 
-def metropolis_hasting(data_dir, prior_alpha=1, prior_beta=100, transition_epsilon=0.001, num_steps=1000):
+def metropolis_hasting(data_dir, prior_alpha=1, prior_beta=100, transition_epsilon=0.001, num_steps=100):
     X = torch.softmax(torch.as_tensor(torch.load(data_dir)), dim=2)
     avg_neutrals = torch.mean(X[:, :, 1], dim=0)
     lambda_prior = beta_prior(prior_alpha, prior_beta)

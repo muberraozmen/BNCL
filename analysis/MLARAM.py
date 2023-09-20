@@ -116,7 +116,7 @@ def vectorized_stackex(num_samples = 5000):
     for i in range(len(Y)):
         for label in Y[i]:
             Y_hot[i, label2id[label]] = 1
-    X, Y, label2id = delete_labels_without_embeddings('../update/inputs/glove.6B.100d.txt', label2id, samples, Y_hot)
+    X, Y, label2id = delete_labels_without_embeddings('../inputs/glove.6B.100d.txt', label2id, samples, Y_hot)
     # for i in range(len(samples)):
     #     vectorized.append(vectorizor.fit_transform(samples[i])).toarray()
 

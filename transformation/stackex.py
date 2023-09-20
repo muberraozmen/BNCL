@@ -76,7 +76,7 @@ conversion = DataConverter(data[0], label2id, device=device)
 X = conversion.X.cpu().numpy()
 Y = conversion.Y.cpu().numpy()
 
-X, Y, label2id = remove_labels_without_embeddings('../update/inputs/glove.6B.100d.txt', label2id, X, Y)
+X, Y, label2id = remove_labels_without_embeddings('../inputs/glove.6B.100d.txt', label2id, X, Y)
 split_and_save_data(X, Y, results_root, 1, 0.8)
 torch.save(label2id, results_root + '/label2id.pt')
 

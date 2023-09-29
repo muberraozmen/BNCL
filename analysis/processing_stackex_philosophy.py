@@ -115,9 +115,9 @@ if __name__ == '__main__':
     label2id = torch.load('C:/Users/jcotn/OneDrive/Desktop/XMTC/resources/stackexchange_philosophy/first5000/full/label2id.pt')
     X = torch.load("C:/Users/jcotn/OneDrive/Desktop/XMTC/resources/stackexchange_philosophy/first5000/full/X.pt")
     Y = torch.load("C:/Users/jcotn/OneDrive/Desktop/XMTC/resources/stackexchange_philosophy/first5000/full/Y_true.pt")
-    X, Y, label2id = delete_labels_without_embeddings('../update/inputs/glove.6B.100d.txt', label2id, X, Y)
+    X, Y, label2id = delete_labels_without_embeddings('../inputs/glove.6B.100d.txt', label2id, X, Y)
     torch.save(label2id, 'C:/Users/jcotn/OneDrive/Desktop/XMTC/resources/stackexchange_philosophy/first5000/label2id.pt')
     path = "C:/Users/jcotn/OneDrive/Desktop/XMTC/resources/stackexchange_philosophy/first5000/"
     split(X,Y,path, 1, 0.8)
     path = "C:/Users/jcotn/OneDrive/Desktop/XMTC/resources/stackexchange_philosophy/first5000/"
-    save_similarity("../update/inputs/glove.6B.100d.txt", label2id, path )
+    save_similarity("../inputs/glove.6B.100d.txt", label2id, path)

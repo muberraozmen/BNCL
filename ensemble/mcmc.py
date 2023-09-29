@@ -47,13 +47,13 @@ def beta_prior(a, b):
 
 def ratio_priors(lambda1, lambda2, lambda_prior):
     return lambda_prior.pdf(lambda1)/lambda_prior.pdf(lambda2)
-import time
+
 
 def ratio_posterior(entailments, x_neutral, lambda1, lambda2, lambda_prior):
     r_posterior = 1
     for i in range(len(entailments)):
         x_entailment = entailments[i]
-        r_likelihood = ratio_dir_pdfs(x_entailment, x_neutral, lambda1, lambda2)
+        r_likelihood = ratio_pdfs(x_entailment, x_neutral, lambda1, lambda2)
         r_prior = ratio_priors(lambda1, lambda2, lambda_prior)
         r_posterior *= r_likelihood * r_prior
     return r_posterior
@@ -76,32 +76,23 @@ def transition_function(lambdas, transition_epsilon):
                                               np.min((1., lambdas[l] + transition_epsilon)))
     return lambdas_suggested
 
-import time
 
-def metropolis_hasting(data_dir, prior_alpha=1, prior_beta=100, transition_epsilon=0.001, num_steps=10000):
+def metropolis_hasting(data_dir, prior_alpha=1, prior_beta=100, transition_epsilon=0.001, num_steps=100):
     X = torch.softmax(torch.as_tensor(torch.load(data_dir)), dim=2)
     avg_neutrals = torch.mean(X[:, :, 1], dim=0)
     lambda_prior = beta_prior(prior_alpha, prior_beta)
     lambdas_current = np.ones(X.size(1)) * 0.01
     samples = [lambdas_current]
     for n in range(num_steps):
-        trans_start = time.time()
         lambdas_suggested = transition_function(lambdas_current, transition_epsilon)
-        trans_end = time.time()
-        # print('trans time:', trans_end-trans_start)
-        update_start = time.time()
         lambdas_current = update_lambdas(X, avg_neutrals, lambdas_current, lambdas_suggested, lambda_prior)
-        update_end = time.time()
-        # print('update time:', update_end-update_start)
         samples.append(lambdas_current)
-        if n%10 == 0:
-            print(n)
     torch.save(samples, 'data')
     return samples
 
 
-data_folder = 'C:/Users/jcotn/PycharmProjects/BNCL/update/inputs'
-for dataset in ["stackexchange_philosophy", "reuters"]:
+data_folder = "/Users/mob/Documents/PycharmProjects/BNCL/update/inputs/"
+for dataset in ["stackex_philosophy", "reuters"]:
     samples = metropolis_hasting(data_dir=data_folder + "/" + dataset + "/train/X.pt")
     torch.save(samples, data_folder + "/" + dataset + "/lambdas.pt")
 

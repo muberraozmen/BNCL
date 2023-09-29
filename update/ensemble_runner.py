@@ -2,14 +2,15 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-__all__ = ['ModelRunner']
+__all__ = ['EnsembleModelRunner']
 
 
-class ModelRunner(object):
-    def __init__(self, model, loss, device='cpu', **kwargs):
+class EnsembleModelRunner(object):
+    def __init__(self, model, loss, ensemble_number, device='cpu', **kwargs):
         self.model = model.to(device)
         self.loss = loss
         self.device = device
+        self.ensemble_number = ensemble_number
         self.optimizer, self.scheduler = self.set_optimizer(**kwargs)
 
     def train_epoch(self, train_loader, annotated_loader=None):
@@ -45,7 +46,6 @@ class ModelRunner(object):
             entailments, contradictions = self.model(entailments.to(self.device), contradictions.to(self.device))
             predictions = self.model.predict(entailments, contradictions)
         return predictions
-
 
     def set_optimizer(self, lr=1e-3, betas=(0.8, 0.9), weight_decay=0,
                       step_size=10, gamma=0.1, **kwargs):

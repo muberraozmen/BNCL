@@ -9,7 +9,8 @@ __all__ = ['CollectiveLoss']
 class CollectiveLoss(object):
     def __init__(self, kappa, lambdas, alphas=None, beta=None):
         self.kappa = torch.as_tensor(kappa)
-        self.lambdas = torch.as_tensor(lambdas)
+        self.lambdas = torch.as_tensor(lambdas, dtype=torch.float)
+        # print(self.lambdas.type())
         if alphas is None:
             self.alphas = torch.as_tensor([1, 0.1, 0.5, 100])
         else:
@@ -29,7 +30,10 @@ class CollectiveLoss(object):
         l2 = self.L2(y_pred.sum(dim=0).to(device), entailment.size(0) * self.lambdas.to(device))
         l3 = self.L3(y_pred.sum(dim=1).to(device), self.kappa.to(device) * torch.ones(entailment.size(0)).to(device))
         if y_true is None:
-            return self.alphas[0] * l1 + self.alphas[1] * l2 + self.alphas[2] * l3
+            # return self.alphas[0] * l1 + self.alphas[1] * l2 + self.alphas[2] * l3
+            return self.alphas[0] * l1 + self.alphas[1] * l2
         else:
             l4 = self.L4(y_pred.to(device), y_true.to(device))
-            return self.alphas[0] * l1 + self.alphas[1] * l2 + self.alphas[2] * l3 + self.alphas[3] * l4
+            # return self.alphas[0] * l1 + self.alphas[1] * l2 + self.alphas[2] * l3 + self.alphas[3] * l4
+            return self.alphas[0] * l1 + self.alphas[1] * l2 + self.alphas[3] * l4
+

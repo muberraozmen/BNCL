@@ -65,3 +65,15 @@ def evaluation(targets, predictions):
     maf1 = f1_score(targets, predictions, average='macro', zero_division=0)
     performance = {'ACC': acc, 'HA': ha, 'ebF1': ebf1, 'miF1': mif1, 'maF1': maf1}
     return performance
+
+
+def ensemble_evaluation(targets, predictions):
+
+    acc = accuracy_score(targets, predictions)
+    ha = 1 - hamming_loss(targets, predictions)
+    ebf1 = f1_score(targets, predictions, average='samples', zero_division=0)
+    mif1 = f1_score(targets, predictions, average='micro', zero_division=0)
+    maf1 = f1_score(targets, predictions, average='macro', zero_division=0)
+    performance = {'ACC': acc, 'HA': ha, 'ebF1': ebf1, 'miF1': mif1, 'maF1': maf1}
+    return performance
+

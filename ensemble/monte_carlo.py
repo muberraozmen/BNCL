@@ -5,7 +5,7 @@ import torch
 
 def Triangular(a, b, c, x):
     if x < a:
-        return 0
+        return 1e-8
     elif x >= a and x < c:
         return (2*(x-a))/((b-a)*(c-a))
     elif x == c:
@@ -13,7 +13,7 @@ def Triangular(a, b, c, x):
     elif x > c and x <= b:
         return (2*(b-x))/((b-a)*(b-c))
     elif x > b:
-        return 0
+        return 1e-8
 def lmda_triangular(x, x_prime, lmda):
     if x + x_prime > 1:
         return 0
@@ -60,7 +60,7 @@ def metro_hast(L, I, eps, N):
     # eps: maximum transision (transition dist -> U(lmda-eps, lamda+eps))
     # N: number of samples to generate
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    lmdas = np.ones(L)*0.5
+    lmdas = np.ones(L)*0.9
     lmdas_prime = np.zeros(L)
     samples = []
     counter = 0

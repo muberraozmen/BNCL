@@ -5,13 +5,14 @@ from runner import *
 from utils import *
 
 if __name__ == '__main__':
+    path = 'C:/Users/jcotn/PycharmProjects/BNCL/'
     parser = argparse.ArgumentParser()
-    parser.add_argument("-data_dir", type=str, default="./update/inputs/reuters")
-    parser.add_argument("-results_dir", type=str, default="./update/outputs/reuters")
+    parser.add_argument("-data_dir", type=str, default=path + "/update/inputs/stackexchange_philosophy")
+    parser.add_argument("-results_dir", type=str, default=path + "/update/outputs/stackexchange_philosophy/")
     parser.add_argument("-supervision", type=int, default=1)
-    parser.add_argument("-annotation_ratio", type=int, default=10)
-    parser.add_argument("-embeddings_file", type=str, default="./update/inputs/glove.6B.100d.txt")
-    parser.add_argument("-cluster_lambdas", type=int, default=0)
+    parser.add_argument("-annotation_ratio", type=int, default=0)
+    parser.add_argument("-embeddings_file", type=str, default=path + "/update/inputs/glove.6B.100d.txt")
+    parser.add_argument("-cluster_lambdas", type=int, default=4)
     parser.add_argument("-hierarchy_file", type=str)
     parser.add_argument("-percentile_neg", type=float, default=0.1)
     parser.add_argument("-percentile_pos", type=float, default=0.9)
@@ -29,7 +30,8 @@ if __name__ == '__main__':
     else:
         device = args.device
 
-    results_dir = args.results_dir + '/supervision level ' + str(args.supervision) + '/seed ' + str(args.seed) + time.strftime(' on %m.%d.%Y at %H.%M.%S/')
+    results_dir = args.results_dir + '/supervision level ' + str(args.supervision) + '/seed ' + str(
+        args.seed) + time.strftime(' on %m.%d.%Y at %H.%M.%S/')
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
     logger = get_logger(results_dir=results_dir)
@@ -41,7 +43,7 @@ if __name__ == '__main__':
         clusters, means, counts, k_range = cluster(data.lambdas, args.cluster_lambdas)
         for i in range(len(clusters)):
             data.lambdas[i] = means[int(clusters[i])]
-            
+
     train_loader = DataLoader(data, batch_size=args.batch_size, shuffle=False, drop_last=False)
     if data.annotated_idx is not None:
         annotated_data = data.load_annotated()
@@ -56,7 +58,7 @@ if __name__ == '__main__':
     for i, (key, value) in enumerate(base_metrics.items()):
         logger.info('{:} = {:}'.format(key, np.round_(value, decimals=4)))
 
-    model = UpdateModel(num_labels=data.num_labels, adj=data.adj,  num_layers=args.num_layers)
+    model = UpdateModel(num_labels=data.num_labels, adj=data.adj, num_layers=args.num_layers)
     loss = CollectiveLoss(kappa=data.kappa, lambdas=data.lambdas)
     runner = ModelRunner(model, loss, device=device)
 
@@ -99,14 +101,14 @@ if __name__ == '__main__':
 
     if args.cluster_lambdas != 0:
         f = open(args.results_dir + "/lambda_cluster_results", "a")
-        f.write("supervision: "+str(args.supervision)+" k_lambda: "+str(args.cluster_lambdas))
+        f.write("supervision: " + str(args.supervision) + " k_lambda: " + str(args.cluster_lambdas))
         f.close()
         for i, (key, value) in enumerate(metrics_best.items()):
             # logger.info('- {:} = {:}'.format(key, np.round_(value, decimals=4)))
-            f = open(args.results_dir+"/lambda_cluster_results", "a")
+            f = open(args.results_dir + "/lambda_cluster_results", "a")
             f.write(' - {:} = {:}'.format(key, np.round_(value, decimals=4)))
             f.close()
-        f = open(args.results_dir+"/lambda_cluster_results", "a")
+        f = open(args.results_dir + "/lambda_cluster_results", "a")
         f.write("\n")
         f.close()
 
@@ -125,8 +127,3 @@ if __name__ == '__main__':
             temp.append(metrics[key])
         bootstraps[key] = np.asarray(temp)
     torch.save(bootstraps, results_dir + 'bootstraps.pt')
-
-
-
-
-

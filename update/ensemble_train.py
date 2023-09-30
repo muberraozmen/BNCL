@@ -9,7 +9,7 @@ from utils import *
 if __name__ == '__main__':
     path = 'C:/Users/jcotn/PycharmProjects/BNCL/'
     parser = argparse.ArgumentParser()
-    parser.add_argument("-data_dir", type=str, default=path + "/update/inputs/reuters")
+    parser.add_argument("-data_dir", type=str, default=path + "/update/inputs/stackexchange_philosophy")
     parser.add_argument("-results_dir", type=str, default=path + "/update/outputs/reuters/")
     parser.add_argument("-supervision", type=int, default=1)
     parser.add_argument("-annotation_ratio", type=int, default=0)

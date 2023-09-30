@@ -64,31 +64,32 @@ def ratio_posterior(entailments, neutrals,contradictions, lambda1, lambda2, lamb
     return r_posterior
 
 def ratio_dir_posterior(X,entailment_sum, neutral_sum, contradictions_sum, lambda1, lambda2, lambda_prior):
-    lambda1 = [lambda1, 1, 1-lambda1]
-    lambda2 = [lambda2, 1, 1-lambda2]
+    alpha1 = [lambda1, 1, 1-lambda1]
+    alpha2 = [lambda2, 1, 1-lambda2]
     mvb_numerator1 = 1
     mvb_numerator2 = 1
-    sum_lambda1 = np.sum(lambda1)
-    sum_lambda2 = np.sum(lambda2)
-    for i in range(len(lambda1)):
-        mvb_numerator1 *= loggamma(lambda1[i])
-        mvb_numerator2 *= loggamma(lambda2[i])
+    sum_lambda1 = np.sum(alpha1)
+    sum_lambda2 = np.sum(alpha2)
+    for i in range(len(alpha1)):
+        mvb_numerator1 += loggamma(alpha1[i])
+        mvb_numerator2 += loggamma(alpha2[i])
 
     mvb1 = loggamma(sum_lambda1) - mvb_numerator1
     mvb2 = loggamma(sum_lambda2) - mvb_numerator2
 
-    p1 = len(X)*mvb1 + entailment_sum*lambda1[0] + neutral_sum*lambda1[1] + contradictions_sum*lambda1[2]
-    p2 = len(X) * mvb2 + entailment_sum * lambda2[0] + neutral_sum * lambda2[1] + contradictions_sum * lambda2[2]
-    return p1/p2
+    p1 = len(X)*mvb1 + entailment_sum*alpha1[0] + neutral_sum*alpha1[1] + contradictions_sum*alpha1[2]
+    p2 = len(X) * mvb2 + entailment_sum * alpha2[0] + neutral_sum * alpha2[1] + contradictions_sum * alpha2[2]
+    ratio_prior = ratio_priors(lambda1, lambda2, lambda_prior)
+    exp_r = torch.exp((p1/p2))
+    # exp_r = 1/
+    return exp_r*ratio_prior
 
-def update_lambdas(X, lambdas_current, lambdas_suggested, lambda_prior):
+def update_lambdas(X, entailments_sum, neutrals_sum, contradictions_sum, lambdas_current, lambdas_suggested, lambda_prior):
     new_lambdas = np.copy(lambdas_current)
     for l in range(X.size(1)):
 
-        entailments_sum = torch.sum(torch.log(X[:, l, 2]))
-        neutrals_sum = torch.sum(torch.log(X[:, l, 1]))
-        contradictions_sum = torch.sum(torch.log(X[:, l, 0]))
-        acceptance = np.min((1., ratio_dir_posterior(X,entailments_sum, neutrals_sum, contradictions_sum, lambdas_current[l], lambdas_suggested[l], lambda_prior)))
+
+        acceptance = np.min((1., ratio_dir_posterior(X,entailments_sum[l], neutrals_sum[l], contradictions_sum[l], lambdas_current[l], lambdas_suggested[l], lambda_prior)))
         r = random.uniform(0, 1)
         if r < acceptance:
             new_lambdas[l] = lambdas_suggested[l]
@@ -110,13 +111,16 @@ def metropolis_hasting(data_dir, prior_alpha=1, prior_beta=100, transition_epsil
     lambda_prior = beta_prior(prior_alpha, prior_beta)
     lambdas_current = np.ones(X.size(1)) * 0.01
     samples = [lambdas_current]
+    entailments_sum = torch.sum(torch.log(X[:, :, 2]), dim=0)
+    neutrals_sum = torch.sum(torch.log(X[:, :, 1]), dim=0)
+    contradictions_sum = torch.sum(torch.log(X[:, :, 0]), dim=0)
     for n in range(num_steps):
         trans_start = time.time()
         lambdas_suggested = transition_function(lambdas_current, transition_epsilon)
         trans_end = time.time()
         # print('trans time:', trans_end-trans_start)
         update_start = time.time()
-        lambdas_current = update_lambdas(X, lambdas_current, lambdas_suggested, lambda_prior)
+        lambdas_current = update_lambdas(X, entailments_sum, neutrals_sum, contradictions_sum, lambdas_current, lambdas_suggested, lambda_prior)
         update_end = time.time()
         # print('update time:', update_end-update_start)
         samples.append(lambdas_current)
